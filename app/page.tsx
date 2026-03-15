@@ -84,7 +84,6 @@ export default function AuditDashboard() {
         delay += 1000;
         setTimeout(() => setLogs(prev => [...prev, `Simulated User: "${res.prompt}"`]), delay);
         
-        // The X-Ray Trace
         delay += 1500;
         setTimeout(() => setLogs(prev => [...prev, `🧠 Cognitive Trace Extract: "${res.reasoning.substring(0, 180)}..."`]), delay);
         
@@ -126,23 +125,30 @@ export default function AuditDashboard() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#d4d4d4] font-mono p-4 sm:p-8 text-sm leading-relaxed flex flex-col antialiased">
       
-      {/* THE NEW POLISHED HEADER */}
+      {/* HEADER WITH OPENAI TRUST BADGE */}
       <div className="flex justify-between items-center text-neutral-500 mb-6 border-b border-neutral-800 pb-4 max-w-6xl w-full mx-auto">
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
           <span className="font-bold tracking-widest uppercase text-white drop-shadow-md">EvalsHQ</span>
           <span className="text-neutral-600 hidden sm:inline">|</span>
-          <span className="text-xs uppercase tracking-widest text-neutral-500 hidden sm:inline">Cognitive Simulator</span>
+          <span className="text-xs uppercase tracking-widest text-neutral-500 hidden sm:inline">Cognitive F1 Simulator</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs uppercase tracking-widest text-neutral-600">API Key:</span>
-          <input 
-            type="password" 
-            placeholder="sk-proj-..." 
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            className="bg-black border border-neutral-800 rounded px-2 py-1 text-xs text-neutral-300 focus:outline-none focus:border-neutral-500 w-48"
-          />
+        
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xs uppercase tracking-widest text-neutral-600">API Key:</span>
+            <input 
+              type="password" 
+              placeholder="sk-proj-..." 
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              className="bg-black border border-neutral-800 rounded px-2 py-1 text-xs text-neutral-300 focus:outline-none focus:border-neutral-500 w-48 transition-all"
+            />
+          </div>
+          <div className="flex items-center gap-1 pr-1 opacity-70">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-neutral-500"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span className="text-[9px] uppercase tracking-widest text-neutral-500 font-bold">Supported by OpenAI</span>
+          </div>
         </div>
       </div>
 
