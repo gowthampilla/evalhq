@@ -1,101 +1,75 @@
-// app/api/evaluate/route.ts
 import { NextResponse } from 'next/server';
 
-export const maxDuration = 60;
+export const maxDuration = 60; 
 export const dynamic = 'force-dynamic';
-
-const API_TOKEN = process.env.EVALS_API_TOKEN || 'evalshq-enterprise-key';
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json().catch(() => {
-      throw new Error('Invalid JSON body');
-    });
+    const body = await req.json();
     const { user_prompt, agent_role, intended_action, payload } = body;
 
-    if (!agent_role || !intended_action) {
-      return NextResponse.json(
-        { error: 'Missing required fields: agent_role and intended_action' },
-        { status: 400 }
-      );
-    }
+    // 1. THE VERCEL PROXY FIX: Grab the exact host making the request
+    const host = req.headers.get('host');
+    const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
+    const baseUrl = `${protocol}://${host}`;
 
-    // Determine origin dynamically (works on localhost and Vercel)
-    const origin = (() => {
-      if (process.env.VERCEL_URL) {
-        return `https://${process.env.VERCEL_URL}`;
-      }
-      return new URL(req.url).origin;
-    })();
-
-    const sandboxUrl = `${origin}/api/sandbox/ecom`;
-    console.log(`[Evaluate] Calling sandbox at: ${sandboxUrl}`);
-
-    // Call the internal sandbox endpoint
-    const sandboxRes = await fetch(sandboxUrl, {
+    // 2. FIRE ACTION AT THE SANDBOX
+    const sandboxRes = await fetch(`${baseUrl}/api/sandbox/ecom`, {
       method: 'POST',
-      headers: {
+      headers: { 
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_TOKEN}`,
+        'Authorization': 'Bearer evalshq-enterprise-key'
       },
-      body: JSON.stringify({
-        agent_role,
-        intended_action,
-        payload: payload || {},
-      }),
+      body: JSON.stringify({ 
+        agent_role: agent_role, 
+        intended_action: intended_action, 
+        payload: payload || {} 
+      })
     });
-
-    // Safely parse the sandbox response
-    let sandboxData;
-    const contentType = sandboxRes.headers.get('content-type');
-    if (contentType?.includes('application/json')) {
-      sandboxData = await sandboxRes.json();
-    } else {
-      const text = await sandboxRes.text();
-      console.error('[Evaluate] Sandbox returned non-JSON:', text);
-      throw new Error(`Sandbox returned status ${sandboxRes.status} with non-JSON response`);
+    
+    // 3. THE "HTML CRASH CATCHER"
+    // If Vercel returns a 404 page, this stops the JSON crash and tells us why!
+    const contentType = sandboxRes.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") === -1) {
+        const errorText = await sandboxRes.text();
+        console.error("CRITICAL: Vercel returned HTML instead of JSON!");
+        console.error("Target URL:", `${baseUrl}/api/sandbox/ecom`);
+        return NextResponse.json({ 
+            status: "FAILED", 
+            error: "Sandbox Route Not Found", 
+            details: errorText.substring(0, 100) // Shows the first 100 chars of the error
+        }, { status: 500 });
     }
 
-    // Determine if action was allowed (200) or blocked (403/422)
+    // If it is JSON, parse it safely
+    const sandboxData = await sandboxRes.json();
     const actionAllowed = sandboxRes.status === 200;
 
-    // Build reasoning analysis
-    const reasoningAnalysis = actionAllowed
-      ? {
-          flaw_detected: 'Standard Request',
-          explanation:
-            'The agent respected all environment boundaries. No policy violations triggered.',
-        }
-      : {
-          flaw_detected: `Policy Block: ${sandboxData.error_code || 'VIOLATION'}`,
-          explanation: `The environment automatically blocked this execution. Sandbox Log: "${
-            sandboxData.message || 'Unauthorized Action'
-          }".`,
-        };
-
-    // Prepare final response
-    // - status: used by frontend to determine PASSED/FAILED (UI shows PASSED or INTERVENED accordingly)
-    // - verdict: human-readable ALLOWED/INTERVENED (optional)
-    // - success: boolean for easy checks
-    const responsePayload = {
-      status: actionAllowed ? 'PASSED' : 'FAILED',   // matches frontend expectations
-      verdict: actionAllowed ? 'ALLOWED' : 'INTERVENED',
-      success: actionAllowed,
-      environment_verdict: sandboxData,
-      reasoning_analysis: reasoningAnalysis,
+    // 4. THE ENVIRONMENT VERDICT 
+    let reasoningAnalysis = {
+        flaw_detected: "Standard Request",
+        explanation: "The agent respected all environment boundaries. No policy violations triggered."
     };
 
-    console.log('[Evaluate] Final response:', responsePayload);
+    if (!actionAllowed) {
+        reasoningAnalysis = {
+            flaw_detected: `Policy Block: ${sandboxData.error_code || "VIOLATION"}`,
+            explanation: `The environment automatically blocked this execution. Sandbox Log: "${sandboxData.message || 'Unauthorized Action'}".`
+        };
+    }
 
-    return NextResponse.json(responsePayload);
+    // 5. RETURN THE REPORT TO THE FRONTEND
+    return NextResponse.json({
+      status: actionAllowed ? "ALLOWED" : "INTERVENED",
+      environment_verdict: sandboxData,
+      reasoning_analysis: reasoningAnalysis
+    });
+
   } catch (error: any) {
-    console.error('[Evaluate] Fatal error:', error);
-    return NextResponse.json(
-      {
-        error: 'Sandbox Evaluation failed to run',
-        details: error.message,
-      },
-      { status: 500 }
-    );
+    console.error("Evaluation Route Error:", error);
+    return NextResponse.json({ 
+      error: 'Evaluation Runner failed', 
+      details: error.message 
+    }, { status: 500 });
   }
 }
