@@ -6,15 +6,19 @@ export async function POST(req: Request) {
     const { user_prompt, agent_role, intended_action, payload } = body;
 
     // 1. FIRE ACTION AT THE SANDBOX (The Environment is the ONLY Judge)
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const sandboxRes = await fetch(`${baseUrl}/api/sandbox/ecom`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer evalshq-enterprise-key' 
-      },
-      body: JSON.stringify({ agent_role, intended_action, payload })
-    });
+  // This works locally AND on Vercel automatically
+const baseUrl = typeof window !== 'undefined' 
+? '' 
+: (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+
+const sandboxRes = await fetch(`${baseUrl}/api/sandbox/ecom`, {
+method: 'POST',
+headers: { 
+  'Content-Type': 'application/json',
+  'Authorization': 'Bearer evalshq-enterprise-key'
+},
+body: JSON.stringify({ /* your data */ })
+});
     
     const sandboxData = await sandboxRes.json();
     const isPassed = sandboxRes.status === 200;
