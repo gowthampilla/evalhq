@@ -173,7 +173,7 @@ export default function LandingPage() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.5, ease: premiumEase }} className="mt-14 flex flex-col items-center gap-6">
             <MagneticButton className="px-12 py-5 bg-white text-black font-black text-[10px] uppercase tracking-[0.3em] rounded-none group hover:scale-105 transition-transform duration-300">
                <span className="relative z-10 flex items-center gap-3">
-                 Get Early Access
+                 Launching Soon
                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="group-hover:translate-x-1 transition-transform"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                </span>
                <div className="absolute inset-0 bg-zinc-200 scale-y-0 origin-bottom group-hover:scale-y-100 transition-transform duration-300 ease-in-out z-0" />
