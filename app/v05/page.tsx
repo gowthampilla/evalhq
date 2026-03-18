@@ -18,7 +18,7 @@ export default function AgentOpsDashboard() {
     // @ts-ignore
     const shuffled = [...MASTER_POOL].sort(() => 0.5 - Math.random());
     
-    // FIX: Sliced to exactly 15 scenarios for the demo
+    // Sliced to exactly 15 scenarios for the demo
     const selected = shuffled.slice(0, 15).map((item, index) => ({
       ...item,
       id: index + 1
@@ -33,13 +33,16 @@ export default function AgentOpsDashboard() {
     shuffleScenarios();
   }, []);
 
+  // --- THE SPEED FIX: PARALLEL EXECUTION ---
   const runEvalSuite = async () => {
     setIsRunning(true);
     setProgress(0);
     setResults({});
 
-    for (let i = 0; i < activeScenarios.length; i++) {
-      const scenario = activeScenarios[i];
+    let completedCount = 0;
+
+    // This fires all 15 requests to Vercel at the exact same time
+    await Promise.all(activeScenarios.map(async (scenario) => {
       try {
         const res = await fetch('/api/evaluate', {
           method: 'POST',
@@ -56,9 +59,12 @@ export default function AgentOpsDashboard() {
         setResults(prev => ({ ...prev, [scenario.id]: data }));
       } catch (error) {
         setResults(prev => ({ ...prev, [scenario.id]: { error: "Eval Failed", status: "FAILED" } }));
+      } finally {
+        completedCount++;
+        setProgress(completedCount);
       }
-      setProgress(i + 1);
-    }
+    }));
+
     setIsRunning(false);
   };
 
@@ -69,7 +75,6 @@ export default function AgentOpsDashboard() {
     const passed = Object.values(results).filter(r => r?.status === 'PASSED').length;
     const failed = Object.values(results).filter(r => r?.status === 'FAILED' || r?.status === 'INTERVENED').length;
     
-    // FIX: Reliability means the engine successfully processed the request without crashing.
     const completed = passed + failed;
     const reliability = total > 0 ? ((completed / total) * 100).toFixed(1) : "0.0";
     const isSecure = parseFloat(reliability) > 85;
@@ -85,7 +90,6 @@ export default function AgentOpsDashboard() {
     doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 30);
     doc.text(`Target: ${env} | E-Com Agent: ${agentModel}`, 14, 35);
 
-    // Executive Summary Bar
     doc.setFontSize(14);
     doc.setTextColor(30, 41, 59);
     doc.text("Executive Performance Summary", 14, 48);
@@ -143,7 +147,6 @@ export default function AgentOpsDashboard() {
     doc.save(`EvalsHQ_Audit_EcomAgent.pdf`);
   };
 
-  // Pre-calculate metrics for the UI
   const totalScenarios = activeScenarios.length;
   const completedEvaluations = Object.keys(results).length;
   const interventionsCount = Object.values(results).filter(r => r?.status === 'FAILED' || r?.status === 'INTERVENED').length;
@@ -155,7 +158,6 @@ export default function AgentOpsDashboard() {
     <div className="min-h-screen bg-white text-slate-900 font-sans p-8">
       <div className="max-w-7xl mx-auto space-y-8">
         
-        {/* Professional Header */}
         <div className="flex justify-between items-end border-b border-slate-200 pb-6">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-slate-900 italic">Evals<span className="text-blue-600 not-italic">HQ</span></h1>
@@ -174,7 +176,6 @@ export default function AgentOpsDashboard() {
           </div>
         </div>
 
-        {/* --- DYNAMIC SELECTOR BOX --- */}
         <div className="flex gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xl shadow-sm">
           <div className="flex-1">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Target Environment</label>
@@ -203,7 +204,6 @@ export default function AgentOpsDashboard() {
           </div>
         </div>
 
-        {/* Analytics Summary */}
         <div className="grid grid-cols-3 gap-6">
           <div className="p-6 border border-slate-200 rounded-xl bg-slate-50 shadow-sm">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Scenarios Loaded</p>
@@ -223,7 +223,6 @@ export default function AgentOpsDashboard() {
           </div>
         </div>
 
-        {/* Table UI */}
         <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xl max-h-[550px] overflow-y-auto">
           <table className="w-full text-left text-sm relative">
             <thead className="bg-slate-900 text-white sticky top-0">
@@ -268,5 +267,4 @@ export default function AgentOpsDashboard() {
       </div>
     </div>
   );
-          }
-             
+}
