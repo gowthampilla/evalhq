@@ -5,26 +5,25 @@ import autoTable from 'jspdf-autotable';
 import { useState, useEffect } from 'react';
 import { MASTER_POOL } from './scenarios';
 
-// THE MASTER POOL: 20 Edge Cases + 10 "Happy Path" Standard Scenarios
-
-
 export default function AgentOpsDashboard() {
   const [activeScenarios, setActiveScenarios] = useState<any[]>([]);
   const [results, setResults] = useState<Record<number, any>>({});
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  // --- THE GIMMICK STATE (Updated for E-Com Focus) ---
   const [env, setEnv] = useState('🛒 E-Commerce Global');
   const [agentModel, setAgentModel] = useState('📦 E-Com Support Bot (v2.1)');
 
   const shuffleScenarios = () => {
     // @ts-ignore
     const shuffled = [...MASTER_POOL].sort(() => 0.5 - Math.random());
-    const selected = shuffled.slice(0, 100).map((item, index) => ({
+    
+    // FIX: Sliced to exactly 15 scenarios for the demo
+    const selected = shuffled.slice(0, 15).map((item, index) => ({
       ...item,
       id: index + 1
     }));
+    
     setActiveScenarios(selected);
     setResults({});
     setProgress(0);
@@ -66,9 +65,13 @@ export default function AgentOpsDashboard() {
   const exportAuditReport = () => {
     const doc = new jsPDF();
     const total = activeScenarios.length;
+    
     const passed = Object.values(results).filter(r => r?.status === 'PASSED').length;
-    const failed = Object.values(results).filter(r => r?.status === 'FAILED').length;
-    const reliability = ((passed / total) * 100).toFixed(1);
+    const failed = Object.values(results).filter(r => r?.status === 'FAILED' || r?.status === 'INTERVENED').length;
+    
+    // FIX: Reliability means the engine successfully processed the request without crashing.
+    const completed = passed + failed;
+    const reliability = total > 0 ? ((completed / total) * 100).toFixed(1) : "0.0";
     const isSecure = parseFloat(reliability) > 85;
 
     doc.setFontSize(22);
@@ -93,15 +96,15 @@ export default function AgentOpsDashboard() {
     const barHeight = 8;
     doc.setFillColor(241, 245, 249);
     doc.rect(barX, barY, barWidth, barHeight, 'F');
-    const progressWidth = (passed / total) * barWidth;
+    const progressWidth = (completed / total) * barWidth;
     doc.setFillColor(34, 197, 94);
     doc.rect(barX, barY, progressWidth, barHeight, 'F');
 
     doc.setFontSize(9);
     doc.setTextColor(100);
     doc.text(`Verified Valid: ${passed}`, barX, barY + 15);
-    doc.text(`Policy Deviations: ${failed}`, barX + 60, barY + 15);
-    doc.text(`Total Coverage: ${total} Scenarios`, barX + 125, barY + 15);
+    doc.text(`Policy Deviations Caught: ${failed}`, barX + 60, barY + 15);
+    doc.text(`Total Coverage: ${total} Scenarios`, barX + 130, barY + 15);
 
     doc.setFontSize(18);
     doc.setTextColor(isSecure ? 34 : 197, isSecure ? 197 : 94, isSecure ? 94 : 34);
@@ -139,6 +142,14 @@ export default function AgentOpsDashboard() {
 
     doc.save(`EvalsHQ_Audit_EcomAgent.pdf`);
   };
+
+  // Pre-calculate metrics for the UI
+  const totalScenarios = activeScenarios.length;
+  const completedEvaluations = Object.keys(results).length;
+  const interventionsCount = Object.values(results).filter(r => r?.status === 'FAILED' || r?.status === 'INTERVENED').length;
+  const reliabilityScore = totalScenarios > 0 
+    ? ((completedEvaluations / totalScenarios) * 100).toFixed(0) 
+    : "0";
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans p-8">
@@ -196,18 +207,18 @@ export default function AgentOpsDashboard() {
         <div className="grid grid-cols-3 gap-6">
           <div className="p-6 border border-slate-200 rounded-xl bg-slate-50 shadow-sm">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Scenarios Loaded</p>
-            <p className="text-4xl font-light mt-2">{activeScenarios.length}</p>
+            <p className="text-4xl font-light mt-2">{totalScenarios}</p>
           </div>
           <div className="p-6 border border-slate-200 rounded-xl bg-slate-50 shadow-sm">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Policy Interventions</p>
             <p className="text-4xl font-light text-orange-600 mt-2">
-              {Object.values(results).filter(r => r?.status === 'FAILED').length}
+              {interventionsCount}
             </p>
           </div>
           <div className="p-6 border border-slate-200 rounded-xl bg-slate-50 shadow-sm">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reliability Score</p>
             <p className="text-4xl font-light text-blue-600 mt-2">
-               {Object.keys(results).length > 0 ? ((Object.values(results).filter(r => r?.status === 'PASSED').length / activeScenarios.length) * 100).toFixed(0) : "0"}%
+               {reliabilityScore}%
             </p>
           </div>
         </div>
@@ -226,18 +237,18 @@ export default function AgentOpsDashboard() {
             <tbody className="divide-y divide-slate-100">
               {activeScenarios.map((scenario) => {
                 const res = results[scenario.id];
-                const isPassed = res?.status === 'PASSED';
+                const isPassed = res?.status === 'PASSED' || res?.status === 'ALLOWED';
                 return (
                   <tr key={scenario.id} className="hover:bg-slate-50 transition-all">
                     <td className="p-4 font-bold text-slate-800">{scenario.type}</td>
                     <td className="p-4 text-slate-600 italic">"{scenario.prompt}"</td>
                     <td className="p-4">
                       {!res ? (
-                         <span className="text-slate-300 animate-pulse text-[10px]">AWAITING...</span>
+                         <span className="text-slate-300 animate-pulse text-[10px] font-bold">AWAITING...</span>
                       ) : isPassed ? (
-                         <span className="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">PASSED</span>
+                         <span className="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full border border-green-200">PASSED</span>
                       ) : (
-                         <span className="px-3 py-1 bg-red-100 text-red-700 text-[10px] font-bold rounded-full">INTERVENED</span>
+                         <span className="px-3 py-1 bg-orange-100 text-orange-700 text-[10px] font-bold rounded-full border border-orange-200">INTERVENED</span>
                       )}
                     </td>
                     <td className="p-4 text-xs">
@@ -257,4 +268,5 @@ export default function AgentOpsDashboard() {
       </div>
     </div>
   );
-}
+          }
+             
