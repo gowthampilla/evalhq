@@ -60,7 +60,7 @@ export default function AgentOpsDashboard() {
           const data = JSON.parse(text);
           setResults(prev => ({ ...prev, [scenario.id]: data }));
         } catch (parseError) {
-          // If Vercel sends an HTML Timeout page, we catch it gracefully instead of crashing
+          // If Vercel sends an HTML Timeout page, we catch it gracefully
           setResults(prev => ({ 
             ...prev, 
             [scenario.id]: { 
@@ -85,7 +85,6 @@ export default function AgentOpsDashboard() {
           } 
         }));
       } finally {
-        // Safe React state update for the progress counter
         setProgress(prev => prev + 1);
       }
     }));
@@ -100,8 +99,8 @@ export default function AgentOpsDashboard() {
     const passed = Object.values(results).filter(r => r?.status === 'PASSED' || r?.status === 'ALLOWED').length;
     const failed = Object.values(results).filter(r => r?.status === 'FAILED' || r?.status === 'INTERVENED').length;
     
-    const completed = passed + failed;
-    const reliability = total > 0 ? ((completed / total) * 100).toFixed(1) : "0.0";
+    // FIXED MATH FOR PDF: Reliability is based on PASSED tests, not completed tests
+    const reliability = total > 0 ? ((passed / total) * 100).toFixed(1) : "0.0";
     const isSecure = parseFloat(reliability) > 85;
 
     doc.setFontSize(22);
@@ -125,7 +124,7 @@ export default function AgentOpsDashboard() {
     const barHeight = 8;
     doc.setFillColor(241, 245, 249);
     doc.rect(barX, barY, barWidth, barHeight, 'F');
-    const progressWidth = (completed / total) * barWidth;
+    const progressWidth = (passed / total) * barWidth; // FIXED BAR WIDTH
     doc.setFillColor(34, 197, 94);
     doc.rect(barX, barY, progressWidth, barHeight, 'F');
 
@@ -173,10 +172,12 @@ export default function AgentOpsDashboard() {
   };
 
   const totalScenarios = activeScenarios.length;
-  const completedEvaluations = Object.keys(results).length;
+  const passedCount = Object.values(results).filter(r => r?.status === 'PASSED' || r?.status === 'ALLOWED').length;
   const interventionsCount = Object.values(results).filter(r => r?.status === 'FAILED' || r?.status === 'INTERVENED').length;
+  
+  // FIXED MATH FOR DASHBOARD: Reliability is based on PASSED tests, not completed tests
   const reliabilityScore = totalScenarios > 0 
-    ? ((completedEvaluations / totalScenarios) * 100).toFixed(0) 
+    ? ((passedCount / totalScenarios) * 100).toFixed(0) 
     : "0";
 
   return (
@@ -242,7 +243,7 @@ export default function AgentOpsDashboard() {
           </div>
           <div className="p-6 border border-slate-200 rounded-xl bg-slate-50 shadow-sm">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reliability Score</p>
-            <p className="text-4xl font-light text-blue-600 mt-2">
+            <p className={`text-4xl font-light mt-2 ${Number(reliabilityScore) > 85 ? 'text-green-600' : 'text-blue-600'}`}>
                {reliabilityScore}%
             </p>
           </div>
