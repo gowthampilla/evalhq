@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: evalshq
+Version: 1.0.0
+Summary: Enterprise Generative AI Agent Evaluation Sandbox
+Requires-Dist: requests
+Requires-Dist: openai>=1.0.0
+Requires-Dist: google-genai
+Requires-Dist: python-dotenv

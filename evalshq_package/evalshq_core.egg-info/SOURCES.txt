@@ -1,0 +1,7 @@
+setup.py
+evalshq/__init__.py
+evalshq_core.egg-info/PKG-INFO
+evalshq_core.egg-info/SOURCES.txt
+evalshq_core.egg-info/dependency_links.txt
+evalshq_core.egg-info/requires.txt
+evalshq_core.egg-info/top_level.txt

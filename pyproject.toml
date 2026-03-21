@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "evalshq-v01"
+version = "1.0.1"
+description = "Enterprise Generative AI Agent Evaluation Sandbox"
+dependencies = [
+    "requests",
+    "openai>=1.0.0",
+    "google-genai",
+    "python-dotenv"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["evalshq*"]

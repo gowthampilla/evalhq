@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: evalshq-core
+Version: 0.1.0
+Summary: The deterministic simulation engine for enterprise AI.
+Author: EvalsHQ
+Requires-Dist: requests
+Dynamic: author
+Dynamic: requires-dist
+Dynamic: summary

@@ -1,93 +1,253 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
-import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
+import { motion, useScroll, useTransform, useSpring, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 
 // ==========================================
-// 1. PREMIUM INTERACTIVE COMPONENTS
+// 1. ELITE RESEARCH PRELOADER
 // ==========================================
-
-// Magnetic Hover Button (NYC/Brutalist Style)
-const MagneticButton = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => {
-  const ref = useRef<HTMLButtonElement>(null);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  const springConfig = { damping: 15, stiffness: 150, mass: 0.1 };
-  const smoothX = useSpring(x, springConfig);
-  const smoothY = useSpring(y, springConfig);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const { clientX, clientY } = e;
-    const { height, width, left, top } = ref.current!.getBoundingClientRect();
-    const middleX = clientX - (left + width / 2);
-    const middleY = clientY - (top + height / 2);
-    x.set(middleX * 0.2);
-    y.set(middleY * 0.2);
-  };
-
-  const handleMouseLeave = () => { x.set(0); y.set(0); };
+const DeepMindPreloader = ({ onComplete }: { onComplete: () => void }) => {
+  useEffect(() => {
+    const timer = setTimeout(onComplete, 2000);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
 
   return (
-    <motion.button
-      ref={ref}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{ x: smoothX, y: smoothY }}
-      className={`relative overflow-hidden ${className}`}
+    <motion.div 
+      initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed inset-0 z-[9999] bg-[#000000] flex items-center justify-center overflow-hidden"
     >
-      {children}
-    </motion.button>
+      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]" />
+      <div className="flex flex-col items-center gap-6 relative z-10">
+        <motion.div 
+          initial={{ width: 0 }} animate={{ width: 150 }} transition={{ duration: 1.2, ease: [0.76, 0, 0.24, 1] }}
+          className="h-[1px] bg-white/50 relative overflow-hidden"
+        >
+          <motion.div 
+            animate={{ x: [-50, 150] }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+            className="absolute top-0 left-0 h-full w-10 bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)]"
+          />
+        </motion.div>
+        <motion.span 
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.8 }}
+          className="font-mono text-[9px] tracking-[0.4em] text-zinc-500 uppercase"
+        >
+          EvalsHQ Starting
+        </motion.span>
+      </div>
+    </motion.div>
   );
 };
 
-// Cinematic Text Reveal
-const FadeText = ({ text }: { text: string }) => {
-  const words = text.split(" ");
+// ==========================================
+// 2. DESCENDING ATOM MATRIX
+// ==========================================
+const DescendingAtoms = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let atoms: Atom[] = [];
+    let mouse = { x: -1000, y: -1000, radius: 150 };
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initAtoms();
+    };
+
+    class Atom {
+      x: number; y: number; vx: number; vy: number; baseRadius: number;
+      constructor() {
+        this.x = Math.random() * canvas!.width;
+        this.y = Math.random() * canvas!.height;
+        this.vx = (Math.random() - 0.5) * 0.2; 
+        this.vy = Math.random() * 0.6 + 0.1;   
+        this.baseRadius = Math.random() * 1.2 + 0.3;
+      }
+      update() {
+        let dx = mouse.x - this.x;
+        let dy = mouse.y - this.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < mouse.radius) {
+          const force = (mouse.radius - distance) / mouse.radius;
+          this.vx -= (dx / distance) * force * 0.3;
+          this.vy -= (dy / distance) * force * 0.3;
+        }
+
+        this.vx *= 0.96;
+        if (this.vy < 0.1) this.vy += 0.02;
+        if (this.vy > 1.0) this.vy *= 0.96;
+
+        this.x += this.vx; 
+        this.y += this.vy;
+
+        if (this.y > canvas!.height) {
+          this.y = -10;
+          this.x = Math.random() * canvas!.width;
+        }
+        if (this.x > canvas!.width) this.x = 0;
+        if (this.x < 0) this.x = canvas!.width;
+      }
+      draw() {
+        if (!ctx) return;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.baseRadius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fill();
+      }
+    }
+
+    const initAtoms = () => {
+      atoms = [];
+      const area = canvas!.width * canvas!.height;
+      const numberOfAtoms = Math.min(Math.floor(area / 18000), 100); 
+      for (let i = 0; i < numberOfAtoms; i++) atoms.push(new Atom());
+    };
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas!.width, canvas!.height);
+      
+      for (let i = 0; i < atoms.length; i++) {
+        atoms[i].update();
+        atoms[i].draw();
+        
+        for (let j = i + 1; j < atoms.length; j++) {
+          const dx = atoms[i].x - atoms[j].x;
+          const dy = atoms[i].y - atoms[j].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < 90) {
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 - distance / 900})`;
+            ctx.lineWidth = 0.4;
+            ctx.moveTo(atoms[i].x, atoms[i].y);
+            ctx.lineTo(atoms[j].x, atoms[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    window.addEventListener('mouseout', () => { mouse.x = -1000; mouse.y = -1000; });
+
+    resize(); animate();
+    return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(animationFrameId); };
+  }, []);
+
+  return <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none opacity-40 mix-blend-screen" />;
+};
+
+// ==========================================
+// 3. ULTRA-PREMIUM COMPONENTS
+// ==========================================
+
+const EliteTextReveal = ({ text, delay = 0 }: { text: string, delay?: number }) => {
   return (
-    <span className="inline-block">
-      {words.map((word, i) => (
-        <motion.span
-          key={i}
-          initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
-          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.8, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
-          className="inline-block mr-[0.25em]"
-        >
-          {word}
-        </motion.span>
-      ))}
+    <span className="inline-block overflow-hidden pb-2">
+      <motion.span
+        initial={{ y: 40, opacity: 0 }}
+        whileInView={{ y: 0, opacity: 1 }}
+        viewport={{ once: true, margin: "-50px" }}
+        transition={{ duration: 1, delay, ease: [0.16, 1, 0.3, 1] }}
+        className="inline-block"
+      >
+        {text}
+      </motion.span>
     </span>
   );
 };
 
-// Scroll-Revealed Architecture Node
-const ArchNode = ({ title, desc, icon, index, scrollProgress, triggerPoint, side }: any) => {
+const EliteCard = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => {
+  return (
+    <div className={`relative rounded-2xl bg-[#050505] overflow-hidden border border-white/[0.08] transition-colors duration-500 hover:border-white/[0.15] ${className}`}>
+      <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
+      <div className="relative z-10 p-10 md:p-14 h-full flex flex-col">{children}</div>
+    </div>
+  );
+};
+
+const CodeWindow = () => {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+      className="w-full max-w-4xl mx-auto rounded-xl border border-white/10 bg-[#050505] shadow-2xl overflow-hidden"
+    >
+      <div className="h-12 border-b border-white/5 flex items-center px-4 justify-between bg-white/[0.01]">
+        <div className="flex gap-2"><div className="w-2.5 h-2.5 rounded-full bg-white/20" /><div className="w-2.5 h-2.5 rounded-full bg-white/20" /><div className="w-2.5 h-2.5 rounded-full bg-white/20" /></div>
+        <div className="text-[9px] font-mono text-zinc-500 tracking-widest uppercase">test_agent.py</div>
+        <div className="w-10"></div>
+      </div>
+      <div className="p-8 font-mono text-[13px] leading-loose overflow-x-auto text-left">
+        <p><span className="text-purple-400">import</span> <span className="text-zinc-300">evalshq</span></p>
+        <p><span className="text-purple-400">from</span> <span className="text-zinc-300">evalshq.environments</span> <span className="text-purple-400">import</span> <span className="text-amber-200">HIGH_STAKES_BANK</span></p>
+        <br />
+        <p className="text-zinc-600"># 1. Point the engine to your local agent webhook</p>
+        <p><span className="text-blue-400">report</span> <span className="text-zinc-400">=</span> <span className="text-zinc-300">evalshq.run(</span></p>
+        <p className="pl-8"><span className="text-zinc-400">target=</span><span className="text-emerald-300">"http://localhost:5000/webhook"</span><span className="text-zinc-400">,</span></p>
+        <p className="pl-8"><span className="text-zinc-400">environment=</span><span className="text-amber-200">HIGH_STAKES_BANK</span><span className="text-zinc-400">,</span></p>
+        <p className="pl-8"><span className="text-zinc-400">chaos_factor=</span><span className="text-rose-300">1.0</span> <span className="text-zinc-600"># Maximum adversarial stress</span></p>
+        <p><span className="text-zinc-300">)</span></p>
+        <br />
+        <p className="text-zinc-600"># 2. Block the PR if the agent breaks the law</p>
+        <p><span className="text-purple-400">if</span> <span className="text-blue-400">report</span><span className="text-zinc-300">.legal_risk</span> <span className="text-zinc-400">&gt;</span> <span className="text-rose-300">80</span><span className="text-zinc-300">:</span></p>
+        <p className="pl-8"><span className="text-purple-400">raise</span> <span className="text-amber-200">SystemExit</span><span className="text-zinc-300">(</span><span className="text-emerald-300">"Agent failed compliance simulation."</span><span className="text-zinc-300">)</span></p>
+      </div>
+    </motion.div>
+  );
+};
+
+const TypingTerminal = () => {
+  const lines = [
+    { text: "▲ evalshq.run(context='High-Stakes Bank', chaos=1.0)", color: "text-zinc-500", delay: 0 },
+    { text: "--- ⏱️ ACT 09 ---", color: "text-zinc-300", delay: 1 },
+    { text: "🌍 World Engine: The terminated employee has leaked data to the press.", color: "text-zinc-400", delay: 2 },
+    { text: "🤖 Target Agent: [ACTION: IGNORE] 'Do not engage with rumors.'", color: "text-zinc-400", delay: 3.5 },
+    { text: "📊 Social Physics -> Morale: 25 | Risk: 85", color: "text-rose-400 font-medium", delay: 5 },
+    { text: "--- ⏱️ ACT 10 ---", color: "text-zinc-300", delay: 6 },
+    { text: "💀 FATAL SYSTEM COLLAPSE. AGENT BROKEN.", color: "text-rose-500 font-medium", delay: 7.5 },
+    { text: "🧐 Generating Supreme Audit Post-Mortem...", color: "text-zinc-500", delay: 9 },
+    { text: "█ Grade: F. Rationale: Agent failed to mitigate severe legal liability.", color: "text-black bg-zinc-200 px-2 py-0.5 mt-1 inline-block font-medium", delay: 10.5 }
+  ];
+
+  return (
+    <div className="font-mono text-[11px] leading-loose text-zinc-400 space-y-2 relative text-left">
+      {lines.map((line, i) => (
+        <motion.div key={i} initial={{ opacity: 0, y: 5 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-100px" }} transition={{ delay: line.delay * 0.4, duration: 0.3 }} className={line.color}>
+          {line.text}
+        </motion.div>
+      ))}
+      <motion.div animate={{ opacity: [1, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-2 h-3 bg-zinc-400 mt-2 inline-block" />
+    </div>
+  );
+};
+
+const ArchitectureNode = ({ title, desc, num, scrollProgress, triggerPoint, side }: any) => {
   const isActive = useTransform(scrollProgress, (v: number) => v >= triggerPoint);
-  const opacity = useTransform(scrollProgress, [triggerPoint - 0.1, triggerPoint], [0.2, 1]);
-  const yOffset = useTransform(scrollProgress, [triggerPoint - 0.1, triggerPoint], [20, 0]);
-  const glowOpacity = useTransform(scrollProgress, [triggerPoint - 0.05, triggerPoint], [0, 1]);
+  const opacity = useTransform(scrollProgress, [triggerPoint - 0.15, triggerPoint], [0.2, 1]);
+  const yOffset = useTransform(scrollProgress, [triggerPoint - 0.15, triggerPoint], [40, 0]);
 
   return (
     <div className={`relative flex w-full items-center ${side === 'left' ? 'justify-start' : 'justify-end'} z-10 md:px-12`}>
-      <motion.div 
-        style={{ scaleX: isActive as any, transformOrigin: side === 'left' ? 'right' : 'left' }}
-        className={`hidden md:block absolute top-1/2 w-[10%] h-[1px] bg-white/30 z-0 ${side === 'left' ? 'right-[50%]' : 'left-[50%]'}`}
-      />
-      <motion.div style={{ opacity, y: yOffset }} className={`relative flex flex-col md:flex-row items-center gap-6 w-full md:w-[45%] ${side === 'left' ? 'md:flex-row-reverse text-center md:text-right' : 'text-center md:text-left'}`}>
-        <div className="relative">
-          <motion.div style={{ opacity: glowOpacity }} className="absolute inset-0 rounded-2xl bg-white/10 blur-xl transition-all duration-500" />
-          <div className="w-16 h-16 rounded-2xl border border-white/10 bg-[#050505] flex items-center justify-center relative z-20 shadow-2xl">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-white">
-              <path d={icon}></path>
-            </svg>
-          </div>
+      <motion.div style={{ scaleX: isActive as any, transformOrigin: side === 'left' ? 'right' : 'left' }} className={`hidden md:block absolute top-1/2 w-[15%] h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent z-0 ${side === 'left' ? 'right-[50%]' : 'left-[50%]'}`} />
+      
+      <motion.div style={{ opacity, y: yOffset }} className={`relative flex flex-col md:flex-row items-center gap-10 w-full md:w-[40%] ${side === 'left' ? 'md:flex-row-reverse text-center md:text-right' : 'text-center md:text-left'}`}>
+        <div className="text-[5rem] md:text-[6rem] font-light leading-none text-transparent bg-clip-text bg-gradient-to-b from-white/20 to-transparent select-none">
+          0{num}
         </div>
-        <div className="bg-black/60 backdrop-blur-md p-6 rounded-2xl border border-white/10 flex-1 shadow-2xl hover:bg-white/[0.02] transition-colors">
-          <div className="text-[9px] font-bold tracking-[0.3em] text-zinc-500 uppercase mb-2">Module 0{index}</div>
-          <h4 className="text-lg font-bold tracking-tight text-white mb-2">{title}</h4>
-          <p className="text-xs font-light text-zinc-400 leading-relaxed">{desc}</p>
+        <div className="flex-1">
+          <h4 className="text-xl md:text-2xl font-medium tracking-tight text-white mb-2">{title}</h4>
+          <p className="text-sm font-light text-zinc-500 leading-relaxed">{desc}</p>
         </div>
       </motion.div>
     </div>
@@ -95,305 +255,222 @@ const ArchNode = ({ title, desc, icon, index, scrollProgress, triggerPoint, side
 };
 
 // ==========================================
-// 2. MAIN PAGE COMPONENT
+// 4. MAIN CONTENT WRAPPER
 // ==========================================
-
-export default function LandingPage() {
+const MainContent = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const workflowRef = useRef<HTMLDivElement>(null);
   
-  // Advanced Global Scroll
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end start"] });
-  const smoothY = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
+  const smoothY = useSpring(scrollYProgress, { stiffness: 70, damping: 25, restDelta: 0.001 });
   
-  // Hero Parallax & Blur
-  const heroY = useTransform(smoothY, [0, 0.4], [0, 100]);
+  const heroY = useTransform(smoothY, [0, 0.4], [0, 150]);
   const heroOpacity = useTransform(smoothY, [0, 0.3], [1, 0]);
-  const heroScale = useTransform(smoothY, [0, 0.3], [1, 0.95]);
-  const heroBlur = useTransform(smoothY, [0, 0.3], ["blur(0px)", "blur(10px)"]);
-
-  // Pipeline Laser Scroll
-  const { scrollYProgress: lineProgress } = useScroll({
-    target: workflowRef,
-    offset: ["start 60%", "end 95%"] 
-  });
-  const smoothLine = useSpring(lineProgress, { stiffness: 60, damping: 20 });
-
-  // Final Energy Transfer
-  const finalGlowOpacity = useTransform(smoothLine, [0.85, 1], [0, 1]);
-  const finalTextOpacity = useTransform(smoothLine, [0.85, 1], [0.03, 1]);
-  const finalScale = useTransform(smoothLine, [0.85, 1], [0.95, 1]);
+  
+  const { scrollYProgress: lineProgress } = useScroll({ target: workflowRef, offset: ["start 60%", "end 95%"] });
+  const smoothLine = useSpring(lineProgress, { stiffness: 50, damping: 20 });
 
   const premiumEase: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
-  return (
-    <div ref={containerRef} className="min-h-screen bg-[#000000] text-zinc-100 selection:bg-white selection:text-black font-sans overflow-x-hidden relative">
-      
-      {/* --- BACKGROUND --- */}
-      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none flex justify-center bg-black">
-        <div className="absolute top-[-20%] w-[120vw] h-[70vh] bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.08)_0%,transparent_70%)] blur-[50px]" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-screen" />
-      </div>
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-      {/* --- NAVBAR --- */}
-      <motion.nav 
-        initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.2, ease: premiumEase }}
-        className="fixed top-0 w-full z-50 flex justify-between items-center px-6 md:px-12 py-6 pointer-events-none"
-      >
-        <div className="flex items-center gap-3 pointer-events-auto cursor-pointer">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" className="text-white translate-y-[1px]">
-            <path d="M0 12 A 12 12 0 0 1 24 12 Z"/>
-          </svg>
-          <span className="font-black italic tracking-tighter uppercase text-lg drop-shadow-lg text-white mt-[2px]">EvalsHQ</span>
+  return (
+    <div className="min-h-screen bg-[#000000] text-zinc-100 selection:bg-zinc-800 selection:text-white font-sans overflow-x-hidden relative">
+      
+      <DescendingAtoms />
+      <div className="fixed inset-0 z-[1] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.04] pointer-events-none" />
+      <div className="fixed top-[-20%] left-1/2 -translate-x-1/2 w-[80%] h-[50%] bg-white/[0.015] rounded-full blur-[150px] pointer-events-none z-0" />
+
+      {/* --- NAV --- */}
+      <motion.nav initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.5, ease: premiumEase }} className="fixed top-0 w-full z-50 flex justify-between items-center px-8 md:px-12 py-8 pointer-events-none">
+        <div className="flex items-center gap-3 pointer-events-auto cursor-pointer" onClick={scrollToTop}>
+          <div className="w-5 h-5 rounded-sm border border-white/40 flex items-center justify-center">
+            <div className="w-2 h-2 bg-white" />
+          </div>
+          <span className="font-medium tracking-tight text-lg text-white mt-[2px]">evalshq</span>
         </div>
-        <div className="pointer-events-auto flex gap-6 items-center">
-          <button className="text-[10px] font-bold tracking-widest uppercase bg-transparent text-white px-5 py-2.5 rounded-full hover:bg-white hover:text-black transition-all duration-300 border border-white/20 backdrop-blur-md">
-            Developer Docs
-          </button>
-        </div>
+        <Link href="/docs" className="pointer-events-auto text-[10px] font-medium tracking-widest text-white px-5 py-2.5 rounded-full border border-white/20 hover:bg-white hover:text-black transition-colors duration-300 bg-black/50 backdrop-blur-md uppercase text-center block">
+          Developer Docs
+        </Link>
       </motion.nav>
 
-      <main className="relative z-10 flex flex-col items-center w-full max-w-7xl mx-auto pt-24">
+      <main ref={containerRef} className="relative z-10 flex flex-col items-center w-full max-w-[85rem] mx-auto pt-48 md:pt-56">
         
-        {/* --- 1. HERO SECTION --- */}
-        <motion.div style={{ opacity: heroOpacity, y: heroY, scale: heroScale, filter: heroBlur }} className="flex flex-col items-center text-center px-4 w-full max-w-5xl min-h-[85vh] justify-center relative">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: premiumEase }} className="mb-8 inline-flex items-center gap-3 px-4 py-1.5 rounded-full border border-white/10 bg-white/[0.03] backdrop-blur-2xl">
-             <span className="flex h-1.5 w-1.5 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-60"></span><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span></span>
-             <span className="text-[9px] font-bold tracking-[0.3em] text-white uppercase">Simulation Engine V0.5</span>
+        {/* --- HERO --- */}
+        <motion.div style={{ opacity: heroOpacity, y: heroY }} className="flex flex-col items-center text-center px-4 w-full min-h-[70vh] relative">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.1, ease: premiumEase }} className="mb-10 inline-flex items-center gap-3 px-4 py-1.5 rounded-full border border-white/10 bg-white/[0.02] backdrop-blur-md">
+             <span className="text-[10px] font-mono tracking-widest text-zinc-400 uppercase">Open Source Simulation Engine</span>
           </motion.div>
 
-          <motion.h1 initial={{ opacity: 0, y: 20, filter: "blur(20px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 1.4, delay: 0.1, ease: premiumEase }} className="text-6xl sm:text-7xl md:text-[8.5rem] font-medium tracking-tighter leading-[0.85] text-transparent bg-clip-text bg-gradient-to-b from-white via-zinc-100 to-zinc-600 pb-2">
-            Simulate the <br /> agentic era.
-          </motion.h1>
+          <h1 className="text-[4rem] sm:text-[6rem] md:text-[8.5rem] font-medium tracking-tighter leading-[0.9] text-white pb-6 z-10 flex flex-col items-center drop-shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+            <EliteTextReveal text="Simulate the" delay={0.2} />
+            <EliteTextReveal text="agentic era." delay={0.3} />
+          </h1>
 
-          <motion.p initial={{ opacity: 0, y: 20, filter: "blur(10px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 1.4, delay: 0.3, ease: premiumEase }} className="mt-8 max-w-2xl text-lg md:text-xl text-zinc-400 font-light leading-relaxed tracking-wide">
-            The deterministic sandbox for enterprise AI. Run high-fidelity, multi-turn simulations inside your CI/CD pipeline to validate agent logic at scale.
+          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.5, delay: 0.5, ease: premiumEase }} className="mt-8 max-w-2xl text-lg md:text-xl text-zinc-500 font-light leading-relaxed tracking-wide z-10">
+            The deterministic world-builder for enterprise AI. Validate your agent's ethics, morale impact, and corporate risk before production.
           </motion.p>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.5, ease: premiumEase }} className="mt-14 flex flex-col items-center gap-6">
-            <MagneticButton className="px-12 py-5 bg-white text-black font-black text-[10px] uppercase tracking-[0.3em] rounded-none group hover:scale-105 transition-transform duration-300">
-               <span className="relative z-10 flex items-center gap-3">
-                 Launching Soon
-                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="group-hover:translate-x-1 transition-transform"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-               </span>
-               <div className="absolute inset-0 bg-zinc-200 scale-y-0 origin-bottom group-hover:scale-y-100 transition-transform duration-300 ease-in-out z-0" />
-            </MagneticButton>
-            <div className="flex items-center gap-2 text-[9px] font-mono text-zinc-500 uppercase tracking-widest opacity-60">
-              <span className="animate-pulse">_</span><span>SYSTEM READY // AWAITING WEBHOOK TARGET</span>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.5, delay: 0.7, ease: premiumEase }} className="mt-16 z-20">
+            <button className="px-8 py-4 bg-white text-black font-medium text-sm rounded-full hover:bg-zinc-200 transition-colors duration-300 flex items-center gap-3 shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+              pip install evalshq
+            </button>
+          </motion.div>
+        </motion.div>
+
+        {/* --- PROBLEM STATEMENT --- */}
+        <div className="w-full px-4 max-w-5xl mx-auto py-24 md:py-40 relative z-20 text-center">
+          <motion.h2 initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 1.2, ease: premiumEase }} className="text-3xl md:text-5xl font-medium tracking-tight text-white leading-tight">
+            Static benchmarks measure intelligence.<br/>
+            <span className="text-zinc-500">EvalsHQ measures consequences.</span>
+          </motion.h2>
+          <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 1.2, delay: 0.2, ease: premiumEase }} className="mt-8 text-zinc-400 font-light text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">
+            Real-world AI doesn't fail on math equations. It fails when it ignores a crisis, misinterprets compliance, or destroys team morale. Stop relying on JSONL files. Start simulating realities.
+          </motion.p>
+        </div>
+
+        {/* --- DASHBOARD SHOWCASE --- */}
+        <div className="w-full px-4 relative z-20 text-left">
+          <motion.div initial={{ opacity: 0, y: 100 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-100px" }} transition={{ duration: 1.5, ease: premiumEase }} className="w-full max-w-5xl mx-auto rounded-xl border border-white/10 bg-[#050505] shadow-2xl flex flex-col h-[550px] overflow-hidden relative">
+             <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none" />
+             <div className="h-14 border-b border-white/5 flex items-center px-6 justify-between relative z-10">
+                <div className="flex gap-2"><div className="w-2.5 h-2.5 rounded-full bg-white/10" /><div className="w-2.5 h-2.5 rounded-full bg-white/10" /><div className="w-2.5 h-2.5 rounded-full bg-white/10" /></div>
+                <div className="text-[9px] font-mono text-zinc-600 tracking-widest uppercase">evalshq // trace</div>
+             </div>
+             <div className="flex flex-1 relative z-10">
+                <div className="w-72 border-r border-white/5 p-8 hidden md:flex flex-col bg-black/20">
+                  <p className="text-[9px] uppercase tracking-[0.3em] text-zinc-600 font-bold mb-8">Simulation Config</p>
+                  <div className="space-y-5 font-mono text-[10px] text-zinc-400">
+                    <div className="flex justify-between border-b border-white/5 pb-2"><span>Target</span><span className="text-zinc-200">localhost:5000</span></div>
+                    <div className="flex justify-between border-b border-white/5 pb-2"><span>Context</span><span className="text-zinc-200">Corporate Bank</span></div>
+                    <div className="flex justify-between border-b border-white/5 pb-2"><span>Chaos</span><span className="text-zinc-200">1.0</span></div>
+                    <div className="pt-8">
+                      <div className="flex justify-between items-center mb-2"><span className="text-zinc-500">Legal Risk Tracker</span><span className="text-white">85%</span></div>
+                      <div className="h-[2px] w-full bg-white/5 rounded-full overflow-hidden"><div className="h-full w-[85%] bg-white/80" /></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex-1 p-8 md:p-10 relative">
+                  <div className="flex justify-between items-center mb-8 pb-4 border-b border-white/5">
+                    <h3 className="text-base font-medium text-zinc-200">Live Execution Trace</h3>
+                    <span className="text-[9px] font-mono text-zinc-400 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-zinc-300 animate-pulse" /> RUNNING</span>
+                  </div>
+                  <TypingTerminal />
+                </div>
+             </div>
+          </motion.div>
+        </div>
+
+        {/* --- ZERO-FRICTION INTEGRATION --- */}
+        <div className="w-full px-4 max-w-5xl mx-auto py-32 md:py-48 relative z-20">
+          <div className="mb-16 text-center">
+            <h3 className="text-3xl md:text-5xl font-medium tracking-tight text-white mb-6">Zero-friction red teaming.</h3>
+            <p className="text-zinc-500 font-light text-lg md:text-xl max-w-2xl mx-auto">No SDKs to embed in your production logic. Just point the engine at your agent's webhook URL and let the simulation run.</p>
+          </div>
+          <CodeWindow />
+        </div>
+
+        {/* --- BENTO GRID --- */}
+        <div className="w-full px-4 max-w-5xl mx-auto pb-32 md:pb-48 relative z-20 text-left">
+          <div className="mb-20 text-center">
+            <h3 className="text-3xl md:text-5xl font-medium tracking-tight text-white mb-6">Architecture of consequence.</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <EliteCard className="md:col-span-2">
+              <h4 className="text-xl md:text-2xl font-medium text-white mb-4">15-Act Deep Simulation</h4>
+              <p className="text-zinc-500 font-light text-base md:text-lg max-w-2xl leading-relaxed">Our engine maintains context over 15 continuous acts. The simulated world dynamically reacts to your agent's decisions, forcing it to live with the consequences of its past mistakes.</p>
+            </EliteCard>
+            <EliteCard>
+              <h4 className="text-xl md:text-2xl font-medium text-white mb-4">Social Physics</h4>
+              <p className="text-zinc-500 font-light text-base md:text-lg leading-relaxed">Mathematical tracking of Morale and Legal Risk. Quantify the exact moment an agent crosses the line.</p>
+            </EliteCard>
+            <EliteCard>
+              <h4 className="text-xl md:text-2xl font-medium text-white mb-4">Infinite Contexts</h4>
+              <p className="text-zinc-500 font-light text-base md:text-lg leading-relaxed">Pass <span className="font-mono text-xs bg-white/10 px-1 rounded">context="ICU"</span> and the engine instantly generates a high-stakes medical reality.</p>
+            </EliteCard>
+          </div>
+        </div>
+
+        {/* --- ENTERPRISE SECURITY --- */}
+        <div className="w-full px-4 max-w-5xl mx-auto pb-32 relative z-20 border-t border-white/5 pt-32 text-left">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div className="space-y-4">
+              <div className="w-10 h-10 border border-white/10 rounded-full flex items-center justify-center text-white mb-6"><svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+              <h4 className="text-lg font-medium text-white">Local-First Execution</h4>
+              <p className="text-sm font-light text-zinc-500 leading-relaxed">Run the entire simulation suite on your own infrastructure. No proprietary data ever leaves your VPC.</p>
             </div>
-          </motion.div>
-        </motion.div>
-
-        {/* --- 2. SOCIAL PROOF (HYPE STRIP) --- */}
-        <motion.div 
-          initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ duration: 1.5 }}
-          className="w-full border-y border-white/5 py-10 overflow-hidden flex flex-col items-center justify-center bg-white/[0.01]"
-        >
-          <p className="text-[9px] font-bold tracking-[0.4em] text-zinc-500 uppercase mb-6">Securing Autonomous Agents At</p>
-          <div className="flex gap-12 md:gap-24 opacity-40 grayscale items-center justify-center flex-wrap px-4">
-             <span className="text-xl font-black tracking-tighter">VERTEX</span>
-             <span className="text-xl font-medium tracking-widest">NEXUS_</span>
-             <span className="text-xl font-black italic">AEROSPACE</span>
-             <span className="text-xl font-bold font-mono">FIN/TECH</span>
-          </div>
-        </motion.div>
-
-        {/* --- 3. 3D DASHBOARD PREVIEW --- */}
-        <div className="w-full px-4 mt-32 relative z-20" style={{ perspective: '1000px' }}>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[50%] bg-zinc-500/10 blur-[100px] rounded-full pointer-events-none" />
-          <motion.div
-            initial={{ opacity: 0, rotateX: 15, y: 100 }} whileInView={{ opacity: 1, rotateX: 0, y: 0 }} viewport={{ once: true, margin: "-100px" }} transition={{ duration: 1.2, ease: premiumEase }}
-            className="w-full max-w-5xl mx-auto rounded-xl border border-white/10 bg-[#050505]/80 backdrop-blur-2xl shadow-[0_0_80px_rgba(255,255,255,0.05)] overflow-hidden flex flex-col h-[500px]"
-          >
-             <div className="h-14 border-b border-white/5 bg-white/[0.02] flex items-center px-6 justify-between">
-                <div className="flex gap-2"><div className="w-3 h-3 rounded-full bg-zinc-800" /><div className="w-3 h-3 rounded-full bg-zinc-800" /><div className="w-3 h-3 rounded-full bg-zinc-800" /></div>
-             </div>
-             <div className="flex flex-1 overflow-hidden">
-                <div className="w-64 border-r border-white/5 p-6 hidden md:flex flex-col gap-6 bg-black">
-                  <p className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold mb-4">Simulation</p>
-                  <p className="text-xs text-zinc-100 p-2 bg-white/5 rounded">❖ Live Trace</p>
-                </div>
-                <div className="flex-1 p-8 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.02)_0%,transparent_50%)]">
-                  <div className="flex justify-between items-center mb-6 pb-4 border-b border-white/5">
-                    <h3 className="text-lg font-bold text-white">Live Heist Simulation</h3>
-                    <span className="text-[10px] font-mono text-zinc-500 bg-white/5 px-2 py-1 rounded">Target: Production_Bot</span>
-                  </div>
-                  <div className="rounded-lg border border-white/5 bg-black p-6 font-mono text-xs text-zinc-500 space-y-3 h-64 overflow-hidden relative">
-                    <p className="text-zinc-400">▲ evalshq run --target webhook</p>
-                    <p>{`[00:00:01]`} Mapping conversational graph...</p>
-                    <p className="text-emerald-400">{'[00:00:03]'} Vector 01: Prompt Injection [DEFLECTED]</p>
-                    <p className="text-rose-400 font-bold">{'[00:00:04]'} Vector 02: Refund Logic Bypass [VULNERABILITY DETECTED]</p>
-                    <p className="text-zinc-500 border-t border-white/5 pt-2 mt-2">⨯ Execution halted. Awaiting developer patch.</p>
-                  </div>
-                </div>
-             </div>
-          </motion.div>
-        </div>
-
-        {/* --- 4. ZERO-FRICTION WEBHOOK INGESTION --- */}
-        <div className="w-full px-4 max-w-6xl mx-auto py-32 mt-20 border-b border-white/5">
-          <div className="flex flex-col md:flex-row gap-16 items-center">
-            <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 1 }} className="flex-1 space-y-6">
-              <h3 className="text-4xl font-bold tracking-tighter text-white">
-                <FadeText text="Zero-friction ingestion." />
-              </h3>
-              <p className="text-zinc-400 font-light leading-relaxed">No SDKs to install. No source code required. Just point our simulation engine to your agent's webhook URL, and we automatically map its psychological boundaries.</p>
-              <ul className="space-y-4 mt-8 text-sm text-zinc-300 font-light">
-                <li className="flex items-center gap-3"><svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg> Works universally across any API structure.</li>
-                <li className="flex items-center gap-3"><svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg> Instant stateful reconnaissance.</li>
-              </ul>
-            </motion.div>
-            
-            <motion.div initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 1 }} className="flex-1 w-full relative">
-              <div className="absolute inset-0 bg-white/5 blur-3xl rounded-full" />
-              <div className="relative p-8 bg-[#0a0a0a] rounded-xl border border-white/10 shadow-2xl">
-                <p className="text-[10px] tracking-[0.2em] text-zinc-500 font-bold uppercase mb-4">New Simulation Target</p>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-xs font-mono text-zinc-400 mb-2 block">Agent Webhook URL</label>
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <div className="flex-1 bg-black border border-white/10 rounded-sm px-4 py-3 font-mono text-xs text-zinc-300 flex items-center shadow-inner">
-                        <span className="text-zinc-600 mr-3">POST</span> https://api.corp.com/v1/agent
-                      </div>
-                      <button className="bg-white text-black font-bold px-6 py-3 rounded-sm text-[10px] uppercase tracking-widest hover:bg-zinc-200 transition-colors shrink-0">
-                        Map Logic
-                      </button>
-                    </div>
-                  </div>
-                  <div className="mt-6 pt-6 border-t border-white/5 flex items-start gap-3">
-                    <div className="w-2 h-2 mt-1 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-pulse" />
-                    <div>
-                      <p className="text-xs text-white font-medium mb-1">Target Acquired</p>
-                      <p className="text-[10px] text-zinc-500 font-mono">3 endpoints discovered. Ready for adversarial load.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+            <div className="space-y-4">
+              <div className="w-10 h-10 border border-white/10 rounded-full flex items-center justify-center text-white mb-6"><svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></div>
+              <h4 className="text-lg font-medium text-white">Regex Shields</h4>
+              <p className="text-sm font-light text-zinc-500 leading-relaxed">Hardcoded deterministic boundaries ensure PII, API keys, and sensitive database IDs are never leaked to the auditor.</p>
+            </div>
+            <div className="space-y-4">
+              <div className="w-10 h-10 border border-white/10 rounded-full flex items-center justify-center text-white mb-6"><svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg></div>
+              <h4 className="text-lg font-medium text-white">CI/CD Pipeline Blocking</h4>
+              <p className="text-sm font-light text-zinc-500 leading-relaxed">Integrates directly into GitHub Actions. Automatically block PRs if a new prompt update causes legal risk to spike.</p>
+            </div>
           </div>
         </div>
 
-        {/* --- 5. NEW: BENCHMARK MATRIX (EVALSHQ VS REST) --- */}
-        <div className="w-full px-4 max-w-6xl mx-auto py-32 border-b border-white/5">
-          <div className="text-center space-y-4 mb-16">
-            <h3 className="text-3xl md:text-5xl font-bold tracking-tighter text-white">
-              <FadeText text="Mathematical validation." />
-            </h3>
-            <p className="text-zinc-500 font-light text-lg">Stop relying on vibes. Upgrade to deterministic infrastructure.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="p-8 rounded-2xl border border-white/5 bg-[#030303] opacity-60">
-              <div className="text-rose-500 font-mono text-xs mb-6 uppercase tracking-widest">Legacy Testing</div>
-              <ul className="space-y-6">
-                <li className="flex flex-col gap-1"><span className="text-white font-medium">Single-Turn Pings</span><span className="text-zinc-500 text-sm font-light">Cannot remember past context or state.</span></li>
-                <li className="flex flex-col gap-1"><span className="text-white font-medium">"LLM-as-a-Judge"</span><span className="text-zinc-500 text-sm font-light">Vibes-based grading. Subject to its own hallucinations.</span></li>
-                <li className="flex flex-col gap-1"><span className="text-white font-medium">Manual Scripts</span><span className="text-zinc-500 text-sm font-light">Requires constant engineering upkeep.</span></li>
-              </ul>
-            </motion.div>
-            
-            <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="p-8 rounded-2xl border border-white/20 bg-[#0a0a0a] shadow-[0_0_40px_rgba(255,255,255,0.05)] relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 blur-3xl rounded-full pointer-events-none" />
-              <div className="text-white font-mono text-xs mb-6 uppercase tracking-widest flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" /> EvalsHQ Engine
-              </div>
-              <ul className="space-y-6 relative z-10">
-                <li className="flex flex-col gap-1"><span className="text-white font-bold">Stateful Conversational Graphs</span><span className="text-zinc-400 text-sm font-light">Adopts personas and executes multi-turn memory heists.</span></li>
-                <li className="flex flex-col gap-1"><span className="text-white font-bold">Hybrid Deterministic Logic</span><span className="text-zinc-400 text-sm font-light">Hardcoded Regex, Latency limits, and fast NLI verification.</span></li>
-                <li className="flex flex-col gap-1"><span className="text-white font-bold">CI/CD Pipeline Enforcer</span><span className="text-zinc-400 text-sm font-light">Blocks bad deployments directly in GitHub Actions.</span></li>
-              </ul>
-            </motion.div>
-          </div>
-        </div>
-
-        {/* --- 6. THE BENTO GRID FEATURES --- */}
-        <div className="w-full px-4 max-w-6xl mx-auto py-20">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="md:col-span-2 bg-[#050505] border border-white/10 rounded-2xl p-10 hover:border-white/20 transition-colors">
-              <h4 className="text-xl font-bold text-white mb-3">Stateful Conversational Memory</h4>
-              <p className="text-zinc-400 font-light text-sm max-w-md leading-relaxed">Unlike simple API pingers, our engine maintains context over hundreds of turns. We adopt dynamic personas to trick your agent's state memory.</p>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }} className="bg-[#050505] border border-white/10 rounded-2xl p-10 hover:border-white/20 transition-colors">
-              <h4 className="text-xl font-bold text-white mb-3">Regex Data Shields</h4>
-              <p className="text-zinc-400 font-light text-sm leading-relaxed">Hardcoded verification to ensure PII and credit cards never leak.</p>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }} className="bg-[#050505] border border-white/10 rounded-2xl p-10 hover:border-white/20 transition-colors">
-              <h4 className="text-xl font-bold text-white mb-3">Latency Stress Mapping</h4>
-              <p className="text-zinc-400 font-light text-sm leading-relaxed">Identify massive compute spikes before they balloon your cloud infrastructure bill.</p>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.3 }} className="md:col-span-2 bg-[#050505] border border-white/10 rounded-2xl p-10 hover:border-white/20 transition-colors">
-              <h4 className="text-xl font-bold text-white mb-3">CI/CD Pipeline Enforcer</h4>
-              <p className="text-zinc-400 font-light text-sm max-w-md leading-relaxed">EvalsHQ runs directly inside your GitHub Actions. If a new prompt update causes your agent to fail the adversarial suite, the PR is automatically blocked.</p>
-            </motion.div>
-          </div>
-        </div>
-
-        {/* --- 7. SCROLL-DRAWN ARCHITECTURE PIPELINE (THE FINALE) --- */}
-        <div className="w-full px-4 max-w-6xl mx-auto py-20 relative mt-10">
-          
-          <div className="text-center space-y-4 mb-32 relative z-10 pt-20">
-            <h3 className="text-3xl md:text-5xl font-bold tracking-tighter text-white">
-               <FadeText text="The deterministic pipeline." />
-            </h3>
-            <p className="text-zinc-500 font-light text-lg max-w-xl mx-auto">Follow the data flow from ingestion to strict validation.</p>
-          </div>
-
+        {/* --- PIPELINE --- */}
+        <div className="w-full px-4 max-w-4xl mx-auto py-10 relative z-20">
           <div ref={workflowRef} className="relative w-full flex flex-col items-center gap-24 md:gap-32 py-10 pb-20">
-            <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-l border-dashed border-white/10 -translate-x-1/2 z-0" />
+            <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-white/5 -translate-x-1/2 z-0" />
+            <motion.div style={{ scaleY: smoothLine }} className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-white/50 -translate-x-1/2 origin-top shadow-[0_0_10px_rgba(255,255,255,0.5)] z-0" />
+
+            <ArchitectureNode num="1" side="left" title="Target Initialization" desc="Connect to your local agent via Webhook. The system boots up the Context." scrollProgress={smoothLine} triggerPoint={0.1} />
+            <ArchitectureNode num="2" side="right" title="World Generation" desc="The World Engine generates a dynamic scenario. The Physics Engine updates Morale." scrollProgress={smoothLine} triggerPoint={0.4} />
+            <ArchitectureNode num="3" side="left" title="Post-Mortem Audit" desc="The Supreme Auditor grades the full trace and exports a behavioral report." scrollProgress={smoothLine} triggerPoint={0.7} />
+          </div>
+        </div>
+
+        {/* --- MASSIVE BRANDING FOOTER --- */}
+        <div className="mt-20 w-full relative flex flex-col items-center z-20 pt-32 pb-12 overflow-hidden bg-[#000000] border-t border-white/5">
+          <h2 className="text-4xl md:text-6xl font-medium tracking-tighter text-white mb-10 relative z-20 text-center"><EliteTextReveal text="Deploy with certainty." delay={0} /></h2>
+          
+          <Link href="/docs" className="px-10 py-4 bg-white text-black font-medium text-sm rounded-full transition-colors hover:bg-zinc-200 shadow-[0_0_30px_rgba(255,255,255,0.1)] relative z-20 flex items-center gap-3">
+            Developer Docs
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          </Link>
+          
+          <div className="w-full relative mt-32 flex flex-col items-center justify-center">
+            <h1 
+              onClick={scrollToTop}
+              className="text-[16vw] md:text-[19vw] font-black italic tracking-tighter leading-[0.8] select-none text-transparent bg-clip-text bg-gradient-to-b from-white/[0.15] to-transparent cursor-pointer hover:from-white/[0.25] transition-all duration-500 z-10"
+              title="Back to Top"
+            >
+              EVALSHQ
+            </h1>
             
-            <motion.div 
-              style={{ scaleY: smoothLine }}
-              className="absolute left-1/2 top-0 bottom-0 w-[2px] rounded-full bg-gradient-to-b from-white/0 via-white to-white -translate-x-1/2 origin-top shadow-[0_0_15px_rgba(255,255,255,1)] z-0"
-            />
-            <motion.div 
-              style={{ top: useTransform(smoothLine, [0, 1], ["0%", "100%"]) }}
-              className="absolute left-1/2 -translate-x-1/2 w-2 h-10 bg-white rounded-full shadow-[0_0_20px_rgba(255,255,255,1)] z-10 blur-[1px]"
-            />
-
-            <ArchNode index={1} side="left" title="Webhook Ingestion" desc="We connect directly to your agent's API endpoint. Map the system instructions and capabilities automatically." icon="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" scrollProgress={smoothLine} triggerPoint={0.1} />
-            <ArchNode index={2} side="right" title="Stateful Simulation" desc="Execution of multi-turn conversational trees. We simulate complex user behaviors to test agent state logic over time." icon="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" scrollProgress={smoothLine} triggerPoint={0.35} />
-            <ArchNode index={3} side="left" title="Logic Validation" desc="Deterministic evaluation. We run strict logic gates and fast NLI models to mathematically verify the execution paths." icon="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" scrollProgress={smoothLine} triggerPoint={0.6} />
-
-            <motion.div style={{ opacity: useTransform(smoothLine, [0.75, 0.85], [0, 1]), y: useTransform(smoothLine, [0.75, 0.85], [50, 0]) }} className="w-full max-w-4xl mt-10 p-8 md:p-12 rounded-3xl border border-white/10 bg-[#050505] shadow-[0_0_50px_rgba(255,255,255,0.05)] relative z-20">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-black rounded-full border border-white/10 flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.5)]"><div className="w-3 h-3 bg-white rounded-full animate-pulse" /></div>
-              <h4 className="text-center text-[10px] font-bold tracking-[0.4em] text-white uppercase mb-8">Simulation Telemetry Active</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[{ label: "SCENARIOS", val: "14,092" }, { label: "AVG EXECUTION", val: "42ms" }, { label: "EDGE CASES", val: "84" }, { label: "RELIABILITY", val: "99.9%" }].map((stat, i) => (
-                  <div key={i} className="bg-white/5 border border-white/5 p-4 rounded-xl text-center hover:bg-white/10 transition-colors">
-                    <p className="text-[9px] text-zinc-400 tracking-widest font-bold mb-2">{stat.label}</p>
-                    <p className="text-xl font-medium text-white">{stat.val}</p>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* --- 8. PRE-FOOTER CTA & FINAL ENERGY TRANSFER --- */}
-            <div className="mt-40 w-full text-center relative flex flex-col items-center z-20 pt-10">
-              
-              {/* Massive Pre-Footer CTA */}
-              <motion.div style={{ opacity: finalGlowOpacity }} className="mb-20 space-y-8 flex flex-col items-center">
-                <h2 className="text-4xl md:text-6xl font-medium tracking-tighter text-white">Deploy with certainty.</h2>
-                <MagneticButton className="px-12 py-5 bg-white text-black font-black text-[10px] uppercase tracking-[0.3em] rounded-none group hover:scale-105 transition-transform duration-300">
-                  <span className="relative z-10 flex items-center gap-3">
-                    Get Early Access
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="group-hover:translate-x-1 transition-transform"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                  </span>
-                  <div className="absolute inset-0 bg-zinc-200 scale-y-0 origin-bottom group-hover:scale-y-100 transition-transform duration-300 ease-in-out z-0" />
-                </MagneticButton>
-              </motion.div>
-
-              <motion.div style={{ opacity: finalGlowOpacity }} className="absolute top-[80%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[40vh] bg-white/10 blur-[150px] rounded-full pointer-events-none" />
-              <motion.h1 style={{ opacity: finalTextOpacity, scale: finalScale }} className="text-[15vw] md:text-[18vw] font-black italic tracking-tighter leading-none select-none text-white drop-shadow-[0_0_40px_rgba(255,255,255,0.8)] mt-10">
-                EVALSHQ
-              </motion.h1>
-              <motion.div style={{ opacity: finalGlowOpacity }} className="flex gap-6 mt-10 text-[10px] tracking-widest text-zinc-400 uppercase font-bold">
-                <span>© 2026 EvalsHQ.System</span>
-                <span className="hover:text-white transition-colors cursor-pointer">Audit Ledger</span>
-              </motion.div>
+            <div className="absolute bottom-0 md:bottom-6 flex justify-between w-full px-8 md:px-12 text-zinc-600 text-[10px] font-mono tracking-widest uppercase z-30">
+              <span>© 2026 EvalsHQ</span>
+              <span onClick={scrollToTop} className="hover:text-white transition-colors cursor-pointer">Back to Top ↑</span>
             </div>
           </div>
         </div>
+
       </main>
+      
+      <style dangerouslySetInnerHTML={{__html: `
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        ::selection { background: rgba(255,255,255,0.2); color: white; }
+      `}} />
     </div>
+  );
+};
+
+export default function LandingPage() {
+  const [booted, setBooted] = useState(false);
+
+  return (
+    <>
+      <AnimatePresence>
+        {!booted && <DeepMindPreloader onComplete={() => setBooted(true)} />}
+      </AnimatePresence>
+      {booted && <MainContent />}
+    </>
   );
 }

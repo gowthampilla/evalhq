@@ -1,0 +1,13 @@
+README.md
+pyproject.toml
+evalshq_package/setup.py
+evalshq_package/evalshq/__init__.py
+evalshq_package/evalshq/main.py
+evalshq_package/evalshq/core/__init__.py
+evalshq_package/evalshq/core/base.py
+evalshq_package/evalshq/core/engine.py
+evalshq_v01.egg-info/PKG-INFO
+evalshq_v01.egg-info/SOURCES.txt
+evalshq_v01.egg-info/dependency_links.txt
+evalshq_v01.egg-info/requires.txt
+evalshq_v01.egg-info/top_level.txt
