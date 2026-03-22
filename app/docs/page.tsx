@@ -274,7 +274,7 @@ export default function DocsPage() {
 
                   <h2 className="text-2xl font-medium text-white mb-4 mt-16">Install via pip</h2>
                   <p className="text-zinc-400 font-light leading-relaxed mb-4">You can install EvalsHQ directly from PyPI:</p>
-                  <CodeBlock language="bash" code={<span className="text-zinc-300">pip install evalshq</span>} />
+                  <CodeBlock language="bash" code={<span className="text-zinc-300">pip install evalshq-v01 </span>} />
 
                   <h2 className="text-2xl font-medium text-white mb-4 mt-16">Environment Setup</h2>
                   <p className="text-zinc-400 font-light leading-relaxed mb-4">
