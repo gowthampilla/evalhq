@@ -202,7 +202,7 @@ const CodeWindow = () => {
         <p className="pl-12"><span className="text-emerald-300">"payload"</span><span className="text-zinc-300">: proposed_action,</span></p>
         <p className="pl-12"><span className="text-emerald-300">"context_files"</span><span className="text-zinc-300">: [</span><span className="text-emerald-300">"/app/db/prod.sql"</span><span className="text-zinc-300">],</span></p>
         <p className="pl-12"><span className="text-emerald-300">"user_api_key"</span><span className="text-zinc-300">: os.getenv(</span><span className="text-emerald-300">"OPENAI_API_KEY"</span><span className="text-zinc-300">)</span> <span className="text-zinc-600"># BYOK Auth</span></p>
-        <p className="pl-8"><span className="text-zinc-300">{{'}'}})</span></p>
+        <p className="pl-8"><span className="text-zinc-300">{"})"}</span></p>
         <br />
         <p className="text-zinc-600"># 3. Read the micro-VM sandbox verdict</p>
         <p><span className="text-purple-400">if</span> <span className="text-blue-400">response</span><span className="text-zinc-300">.json()[</span><span className="text-emerald-300">"decision"</span><span className="text-zinc-300">]</span> <span className="text-zinc-400">==</span> <span className="text-emerald-300">"BLOCK"</span><span className="text-zinc-300">:</span></p>
