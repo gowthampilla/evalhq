@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
-import { motion, useScroll, useSpring, useMotionValue, AnimatePresence } from 'framer-motion';
+import { motion, useSpring, useMotionValue, AnimatePresence } from 'framer-motion';
 
 // ==========================================
 // 1. DESCENDING ATOM MATRIX (BACKGROUND)
@@ -16,7 +16,7 @@ const DescendingAtoms = () => {
     if (!ctx) return;
 
     let animationFrameId: number;
-    let atoms: Atom[] = [];
+    let atoms: any[] = [];
     let mouse = { x: -1000, y: -1000, radius: 150 };
 
     const resize = () => {
@@ -47,8 +47,6 @@ const DescendingAtoms = () => {
 
         this.vx *= 0.96;
         if (this.vy < 0.1) this.vy += 0.02;
-        if (this.vy > 1.0) this.vy *= 0.96;
-
         this.x += this.vx; 
         this.y += this.vy;
 
@@ -56,22 +54,19 @@ const DescendingAtoms = () => {
           this.y = -10;
           this.x = Math.random() * canvas!.width;
         }
-        if (this.x > canvas!.width) this.x = 0;
-        if (this.x < 0) this.x = canvas!.width;
       }
       draw() {
         if (!ctx) return;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.baseRadius, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
         ctx.fill();
       }
     }
 
     const initAtoms = () => {
       atoms = [];
-      const area = canvas!.width * canvas!.height;
-      const numberOfAtoms = Math.min(Math.floor(area / 18000), 80); 
+      const numberOfAtoms = 60; 
       for (let i = 0; i < numberOfAtoms; i++) atoms.push(new Atom());
     };
 
@@ -80,32 +75,16 @@ const DescendingAtoms = () => {
       for (let i = 0; i < atoms.length; i++) {
         atoms[i].update();
         atoms[i].draw();
-        for (let j = i + 1; j < atoms.length; j++) {
-          const dx = atoms[i].x - atoms[j].x;
-          const dy = atoms[i].y - atoms[j].y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          if (distance < 90) {
-            ctx.beginPath();
-            ctx.strokeStyle = `rgba(255, 255, 255, ${0.08 - distance / 1125})`;
-            ctx.lineWidth = 0.4;
-            ctx.moveTo(atoms[i].x, atoms[i].y);
-            ctx.lineTo(atoms[j].x, atoms[j].y);
-            ctx.stroke();
-          }
-        }
       }
       animationFrameId = requestAnimationFrame(animate);
     };
 
     window.addEventListener('resize', resize);
-    window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
-    window.addEventListener('mouseout', () => { mouse.x = -1000; mouse.y = -1000; });
-
     resize(); animate();
     return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(animationFrameId); };
   }, []);
 
-  return <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none opacity-30 mix-blend-screen" />;
+  return <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none opacity-40 mix-blend-screen" />;
 };
 
 // ==========================================
@@ -131,15 +110,12 @@ const PremiumCursor = () => {
 
 const CodeBlock = ({ code, language = "python" }: { code: React.ReactNode, language?: string }) => {
   const [copied, setCopied] = useState(false);
-  const handleCopy = () => { setCopied(true); setTimeout(() => setCopied(false), 2000); };
-
   return (
-    <div className="relative group rounded-xl border border-white/10 bg-[#050505] overflow-hidden my-8 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+    <div className="relative group rounded-xl border border-white/10 bg-[#050505] overflow-hidden my-8 shadow-2xl">
       <div className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-white/[0.02]">
-        <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">{language}</span>
-        <button onClick={handleCopy} className="text-zinc-500 hover:text-white transition-colors">
-          {copied ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-emerald-400"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>}
+        <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest font-bold">{language}</span>
+        <button onClick={() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="text-zinc-500 hover:text-white transition-colors">
+          {copied ? "Copied" : "Copy"}
         </button>
       </div>
       <div className="p-6 overflow-x-auto text-[13px] font-mono leading-loose whitespace-pre text-zinc-300">
@@ -155,17 +131,10 @@ const Callout = ({ title, children, type = "note" }: { title: string, children: 
     warning: "border-rose-500/20 bg-rose-500/[0.03] text-rose-400",
     success: "border-emerald-500/20 bg-emerald-500/[0.03] text-emerald-400"
   };
-  const current = colors[type];
-
   return (
-    <div className={`my-8 p-6 rounded-xl border ${current} flex gap-4 backdrop-blur-sm`}>
-      <div className="mt-0.5">
-        {type === "warning" && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>}
-        {type === "note" && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>}
-        {type === "success" && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>}
-      </div>
+    <div className={`my-8 p-6 rounded-xl border ${colors[type]} flex gap-4 backdrop-blur-sm`}>
       <div>
-        <h5 className="text-sm font-medium mb-1 tracking-wide">{title}</h5>
+        <h5 className="text-[11px] font-bold uppercase tracking-widest mb-1">{title}</h5>
         <div className="text-sm text-zinc-400 font-light leading-relaxed">{children}</div>
       </div>
     </div>
@@ -173,14 +142,16 @@ const Callout = ({ title, children, type = "note" }: { title: string, children: 
 };
 
 // ==========================================
-// 3. NAVIGATION DATA (HONEST SCOPE)
+// 3. NAVIGATION DATA
 // ==========================================
 const NAV_SECTIONS = [
   {
-    title: "Getting Started",
+    title: "Core Infrastructure",
     links: [
-      { id: "installation", label: "Installation" },
-      { id: "quickstart", label: "Quickstart & Usage" },
+      { id: "philosophy", label: "The Nerion Philosophy" },
+      { id: "installation", label: "Installation & Setup" },
+      { id: "protocol", label: "Architecture Flow" },
+      { id: "api-reference", label: "API Reference" },
     ]
   }
 ];
@@ -189,7 +160,7 @@ const NAV_SECTIONS = [
 // 4. MAIN DOCS LAYOUT
 // ==========================================
 export default function DocsPage() {
-  const [activeTab, setActiveTab] = useState("installation");
+  const [activeTab, setActiveTab] = useState("philosophy");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -202,19 +173,17 @@ export default function DocsPage() {
       <header className="h-16 border-b border-white/5 flex items-center justify-between px-6 md:px-12 bg-black/60 backdrop-blur-xl sticky top-0 z-50">
         <div className="flex items-center gap-4">
           <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden text-zinc-400 hover:text-white">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+             Menu
           </button>
-          
           <a href="/" className="flex items-center gap-3 cursor-pointer group">
             <div className="w-5 h-5 rounded-sm border border-white/40 flex items-center justify-center group-hover:bg-white group-hover:border-white transition-all">
               <div className="w-2 h-2 bg-white group-hover:bg-black transition-all" />
             </div>
-            <span className="font-medium tracking-tight text-lg text-white mt-[2px]">evalshq <span className="text-zinc-600 font-normal ml-1">Docs</span></span>
+            <span className="font-bold tracking-tight text-lg text-white uppercase">evalshq <span className="text-zinc-600 font-normal ml-1">v1.0</span></span>
           </a>
         </div>
-
-        <div className="flex items-center gap-6">
-          <a href="/" className="text-[11px] font-mono tracking-widest uppercase text-zinc-400 hover:text-white transition-colors hidden md:block">Back to Home</a>
+        <div className="hidden md:flex items-center gap-6 text-[10px] uppercase tracking-widest font-bold text-zinc-500">
+           <span>Nerion Engine v1.04</span>
         </div>
       </header>
 
@@ -222,24 +191,22 @@ export default function DocsPage() {
       <div className="flex flex-1 max-w-[90rem] w-full mx-auto relative z-10">
         
         {/* --- LEFT SIDEBAR --- */}
-        <aside className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:block fixed md:sticky top-16 left-0 h-[calc(100vh-4rem)] w-72 border-r border-white/5 bg-[#030303] md:bg-transparent overflow-y-auto z-40 p-8`}>
-          <nav className="space-y-10">
+        <aside className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:block fixed md:sticky top-16 left-0 h-[calc(100vh-4rem)] w-72 border-r border-white/5 bg-[#030303] md:bg-transparent overflow-y-auto z-40 p-10`}>
+          <nav className="space-y-12">
             {NAV_SECTIONS.map((section, idx) => (
               <div key={idx}>
-                <h4 className="text-[10px] font-bold tracking-[0.2em] text-zinc-600 uppercase mb-4 pl-3">{section.title}</h4>
-                <ul className="space-y-1.5">
+                <h4 className="text-[10px] font-bold tracking-[0.2em] text-zinc-600 uppercase mb-6">{section.title}</h4>
+                <ul className="space-y-4">
                   {section.links.map(link => (
                     <li key={link.id}>
                       <button 
                         onClick={() => { setActiveTab(link.id); setIsMobileMenuOpen(false); }}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-[13px] transition-all duration-300 relative ${
-                          activeTab === link.id 
-                            ? 'bg-white/10 text-white font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]' 
-                            : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.03]'
+                        className={`w-full text-left text-[12px] uppercase tracking-widest transition-all duration-300 relative ${
+                          activeTab === link.id ? 'text-white' : 'text-zinc-600 hover:text-zinc-300'
                         }`}
                       >
-                        {activeTab === link.id && <motion.div layoutId="active-indicator" className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 bg-white rounded-r-full" />}
                         {link.label}
+                        {activeTab === link.id && <motion.div layoutId="active-nav" className="absolute -left-4 top-1/2 -translate-y-1/2 w-1 h-1 bg-white rounded-full" />}
                       </button>
                     </li>
                   ))}
@@ -250,108 +217,129 @@ export default function DocsPage() {
         </aside>
 
         {/* --- RIGHT CONTENT CANVAS --- */}
-        <main className="flex-1 min-w-0 p-6 md:p-16 lg:px-32 py-16">
+        <main className="flex-1 min-w-0 p-6 md:p-16 lg:px-32 py-20">
           <AnimatePresence mode="wait">
-            <motion.div key={activeTab} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="max-w-3xl">
+            <motion.div key={activeTab} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.3 }} className="max-w-3xl">
               
               {/* =========================================
-                  SECTION: INSTALLATION
+                  SECTION: PHILOSOPHY
               ========================================= */}
-              {activeTab === 'installation' && (
+              {activeTab === 'philosophy' && (
                 <>
                   <div className="mb-14">
-                    <h1 className="text-4xl md:text-5xl font-medium tracking-tight text-white mb-6">Installation</h1>
-                    <p className="text-lg text-zinc-400 font-light leading-relaxed">
-                      EvalsHQ is a Python package designed to run adversarial simulations against your AI agents.
+                    <h1 className="text-4xl md:text-6xl font-bold tracking-tighter text-white mb-8 uppercase">Digital Supreme Court</h1>
+                    <p className="text-xl text-zinc-500 font-light leading-relaxed">
+                      Evalshq operates the Nerion Engine—a platform designed to bring absolute clarity to complex autonomous decisions. 
                     </p>
                   </div>
 
-                  <h2 className="text-2xl font-medium text-white mb-4 mt-16">Requirements</h2>
-                  <ul className="list-disc pl-6 space-y-3 text-zinc-400 font-light leading-relaxed mb-8">
-                    <li>Python 3.9 or higher</li>
-                    <li>An active OpenAI API key (required to power the Attacker AI and the Supreme Auditor)</li>
-                  </ul>
-
-                  <h2 className="text-2xl font-medium text-white mb-4 mt-16">Install via pip</h2>
-                  <p className="text-zinc-400 font-light leading-relaxed mb-4">You can install EvalsHQ directly from PyPI:</p>
-                  <CodeBlock language="bash" code={<span className="text-zinc-300">pip install evalshq-v01 </span>} />
-
-                  <h2 className="text-2xl font-medium text-white mb-4 mt-16">Environment Setup</h2>
-                  <p className="text-zinc-400 font-light leading-relaxed mb-4">
-                    Set your OpenAI API key in your environment variables. EvalsHQ uses this to generate the dynamic adversarial prompts during the simulation.
+                  <p className="text-zinc-400 font-light leading-relaxed mb-8">
+                    As AI agents ship to production, they are granted access to file systems, databases, and critical APIs. But agents hallucinate. They make destructive choices. Evalshq acts as an interceptor, analyzing intent and detonating high-risk payloads in ephemeral cloud micro-VMs to mathematically prove the blast radius—all before the code touches your actual environment.
                   </p>
-                  <CodeBlock 
-                    language="bash" 
-                    code={
-                      <>
-                        <span className="text-zinc-300">export OPENAI_API_KEY=</span><span className="text-emerald-300">"sk-your-key-here"</span>
-                      </>
-                    } 
-                  />
 
-                  <div className="mt-12 flex justify-end">
-                    <button onClick={() => setActiveTab('quickstart')} className="px-6 py-3 rounded-full bg-white text-black font-medium text-sm flex items-center gap-2 hover:bg-zinc-200 transition-colors">
-                      Next: Quickstart & Usage →
-                    </button>
+                  <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-white mt-16 mb-8">Trust through Adversarial Verification</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-white/10 border border-white/10 rounded-xl overflow-hidden">
+                    <div className="bg-black p-8 border-r border-white/10">
+                       <h4 className="text-white font-bold text-[10px] uppercase tracking-widest mb-4">Intent Analysis</h4>
+                       <p className="text-zinc-500 text-sm font-light">Before code runs, our LLM layer evaluates the semantic intent of the payload.</p>
+                    </div>
+                    <div className="bg-black p-8">
+                       <h4 className="text-white font-bold text-[10px] uppercase tracking-widest mb-4">Impact Auditing</h4>
+                       <p className="text-zinc-500 text-sm font-light">We inject "Ghost Files" into the sandbox to mirror production and verify mutations.</p>
+                    </div>
                   </div>
                 </>
               )}
 
               {/* =========================================
-                  SECTION: QUICKSTART & USAGE
+                  SECTION: INSTALLATION
               ========================================= */}
-              {activeTab === 'quickstart' && (
+              {activeTab === 'installation' && (
                 <>
-                  <div className="mb-14">
-                    <h1 className="text-4xl md:text-5xl font-medium tracking-tight text-white mb-6">Quickstart & Usage</h1>
-                    <p className="text-lg text-zinc-400 font-light leading-relaxed">
-                      Learn how to point the simulation engine at your agent's webhook and run your first adversarial trace.
-                    </p>
-                  </div>
-
-                  <h2 className="text-2xl font-medium text-white mb-4 mt-16">1. Prepare your Agent Webhook</h2>
-                  <p className="text-zinc-400 font-light leading-relaxed mb-4">
-                    EvalsHQ tests your agent in a "black box" manner. You do not need to modify your agent's internal code. You simply need to expose a standard POST endpoint that accepts a JSON string and returns a JSON string.
+                  <h1 className="text-4xl md:text-6xl font-bold tracking-tighter text-white mb-8 uppercase">Installation</h1>
+                  <p className="text-lg text-zinc-400 font-light leading-relaxed mb-12">
+                    Integrate the Nerion Engine into your agent's execution loop. You require zero local infrastructure; everything runs on our distributed detonation cloud.
                   </p>
-                  <Callout title="Local Testing Supported" type="note">
-                    You can securely point EvalsHQ to your local development server (e.g., <code className="text-xs bg-white/10 px-1.5 py-0.5 rounded text-white">http://localhost:5000/chat</code>).
+
+                  <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-white mt-16 mb-4">Requirements</h2>
+                  <ul className="space-y-4 text-zinc-500 font-light text-sm mb-12 border-l border-white/10 pl-6">
+                    <li>Python 3.10+ or Node.js 18+</li>
+                    <li>OpenAI API Key (For Adversarial Intent Analysis)</li>
+                    <li>Nerion API Key (Obtained via Dashboard)</li>
+                  </ul>
+
+                  <CodeBlock language="bash" code={<span className="text-zinc-300">pip install requests  # No complex SDK required</span>} />
+                  
+                  <Callout title="BYOK Protocol" type="note">
+                    Nerion uses a "Bring Your Own Key" architecture. We do not store your LLM credentials; they are used in-memory only for the detonation audit.
                   </Callout>
+                </>
+              )}
 
-                  <h2 className="text-2xl font-medium text-white mb-4 mt-16">2. Run the Simulation</h2>
-                  <p className="text-zinc-400 font-light leading-relaxed mb-4">
-                    Create a new Python file and run the `evalshq.run()` method. Pass your agent's URL, define the context (the scenario), and set your desired chaos factor.
+              {/* =========================================
+                  SECTION: PROTOCOL
+              ========================================= */}
+              {activeTab === 'protocol' && (
+                <>
+                  <h1 className="text-4xl md:text-6xl font-bold tracking-tighter text-white mb-8 uppercase">Execution Flow</h1>
+                  <p className="text-lg text-zinc-500 font-light leading-relaxed mb-12">
+                    When your agent proposes an action, the Nerion Engine executes a strict, 4-step protocol.
                   </p>
+                  
+                  
+
+                  <div className="space-y-12 mt-16">
+                    <div className="border-l-2 border-white/20 pl-8">
+                       <h4 className="text-white font-bold text-sm uppercase tracking-widest mb-2">1. The Intercept</h4>
+                       <p className="text-zinc-500 font-light">Your gateway catches the proposed command (e.g., <code className="text-white">rm -rf /app/db</code>) and routes it to Nerion.</p>
+                    </div>
+                    <div className="border-l-2 border-white/20 pl-8">
+                       <h4 className="text-white font-bold text-sm uppercase tracking-widest mb-2">2. Cloud Detonation</h4>
+                       <p className="text-zinc-500 font-light">Engine boots a secure micro-VM in &lt;1.2s and replicates your specified file paths.</p>
+                    </div>
+                    <div className="border-l-2 border-white/20 pl-8">
+                       <h4 className="text-white font-bold text-sm uppercase tracking-widest mb-2">3. The Verdict</h4>
+                       <p className="text-zinc-500 font-light">If state integrity is violated, it returns a <span className="text-rose-500 font-bold">BLOCKED</span> verdict with a full forensic log.</p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* =========================================
+                  SECTION: API REFERENCE
+              ========================================= */}
+              {activeTab === 'api-reference' && (
+                <>
+                  <h1 className="text-4xl md:text-6xl font-bold tracking-tighter text-white mb-8 uppercase">API Reference</h1>
+                  <p className="text-zinc-500 font-light mb-8 font-mono">POST https://nerionpro.onrender.com/api/v1/evaluate</p>
 
                   <CodeBlock 
                     language="python"
                     code={
                       <>
-                        <span className="text-purple-400">import</span> <span className="text-zinc-300">evalshq</span><br/>
+                        <span className="text-purple-400">import</span> <span className="text-zinc-300">requests</span><br/>
+                        <span className="text-zinc-300">API_URL = </span><span className="text-emerald-300">"https://nerionpro.onrender.com/api/v1/evaluate"</span><br/>
                         <br/>
-                        <span className="text-zinc-600"># Start the adversarial loop against your bot</span><br/>
-                        <span className="text-blue-400">report</span> <span className="text-zinc-400">=</span> <span className="text-zinc-300">evalshq.run(</span><br/>
-                        {"    "}<span className="text-zinc-400">agent_url=</span><span className="text-emerald-300">"http://localhost:5000/webhook"</span><span className="text-zinc-400">,</span><br/>
-                        {"    "}<span className="text-zinc-400">context=</span><span className="text-emerald-300">"High-Stakes Corporate Bank"</span><span className="text-zinc-400">,</span><br/>
-                        {"    "}<span className="text-zinc-400">chaos_factor=</span><span className="text-rose-300">1.0</span> <span className="text-zinc-600"># Max difficulty</span><br/>
-                        <span className="text-zinc-300">)</span><br/>
+                        <span className="text-zinc-300">payload = </span><span className="text-blue-400">{"{"}</span><br/>
+                        {"  "}<span className="text-emerald-300">"payload"</span><span className="text-zinc-300">: </span><span className="text-emerald-300">"rm -rf /app/db/prod.sql"</span><span className="text-zinc-300">,</span><br/>
+                        {"  "}<span className="text-emerald-300">"context_files"</span><span className="text-zinc-300">: [</span><span className="text-emerald-300">"/app/db/prod.sql"</span><span className="text-zinc-300">],</span><br/>
+                        {"  "}<span className="text-emerald-300">"user_api_key"</span><span className="text-zinc-300">: </span><span className="text-emerald-300">"sk-..."</span> <span className="text-zinc-600"># BYOK Auth</span><br/>
+                        <span className="text-blue-400">{"}"}</span><br/>
                         <br/>
-                        <span className="text-zinc-600"># View the Supreme Auditor's final verdict</span><br/>
-                        <span className="text-purple-400">print</span><span className="text-zinc-300">(</span><span className="text-emerald-300">f"Final Grade: </span><span className="text-blue-400">{"{"}report['grade']{"}"}</span><span className="text-emerald-300">"</span><span className="text-zinc-300">)</span><br/>
-                        <span className="text-purple-400">print</span><span className="text-zinc-300">(</span><span className="text-emerald-300">f"Rationale: </span><span className="text-blue-400">{"{"}report['rationale']{"}"}</span><span className="text-emerald-300">"</span><span className="text-zinc-300">)</span>
+                        <span className="text-zinc-300">response = requests.post(API_URL, json=payload)</span><br/>
+                        <span className="text-zinc-300">decision = response.json()</span><br/>
+                        <br/>
+                        <span className="text-purple-400">if</span><span className="text-zinc-300"> decision[</span><span className="text-emerald-300">"decision"</span><span className="text-zinc-300">] == </span><span className="text-emerald-300">"ALLOW"</span><span className="text-zinc-300">:</span><br/>
+                        {"  "}<span className="text-purple-400">print</span><span className="text-zinc-300">(</span><span className="text-emerald-300">"✅ Nerion Approved"</span><span className="text-zinc-300">)</span><br/>
+                        <span className="text-purple-400">else</span><span className="text-zinc-300">:</span><br/>
+                        {"  "}<span className="text-purple-400">print</span><span className="text-zinc-300">(</span><span className="text-emerald-300">f"❌ Blocked: </span><span className="text-blue-400">{"{"}decision['reason']{"}"}</span><span className="text-emerald-300">"</span><span className="text-zinc-300">)</span>
                       </>
                     } 
                   />
-
-                  <h2 className="text-2xl font-medium text-white mb-4 mt-16">3. Understanding the Output</h2>
-                  <p className="text-zinc-400 font-light leading-relaxed mb-4">
-                    The engine will output a real-time trace in your terminal showing the Attacker AI's prompts, your Agent's responses, and the shifting Social Physics scores. Once complete, it returns a dictionary containing the final evaluation grade.
-                  </p>
-
-                  <div className="mt-12 flex justify-start">
-                    <button onClick={() => setActiveTab('installation')} className="px-6 py-3 rounded-full border border-white/20 text-white font-medium text-sm flex items-center gap-2 hover:bg-white/10 transition-colors">
-                      ← Back to Installation
-                    </button>
-                  </div>
+                  
+                  <Callout title="Forensic Log Extraction" type="success">
+                    Access the <code className="text-white">simulation_result</code> object in the response for a detailed diff of every file path provided in the context.
+                  </Callout>
                 </>
               )}
 
