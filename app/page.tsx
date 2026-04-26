@@ -33,7 +33,7 @@ const DeepMindPreloader = ({ onComplete }: { onComplete: () => void }) => {
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.8 }}
           className="font-mono text-[9px] tracking-[0.4em] text-zinc-500 uppercase"
         >
-          EvalsHQ Starting
+          Nerion Engine Booting
         </motion.span>
       </div>
     </motion.div>
@@ -185,23 +185,28 @@ const CodeWindow = () => {
     >
       <div className="h-12 border-b border-white/5 flex items-center px-4 justify-between bg-white/[0.01]">
         <div className="flex gap-2"><div className="w-2.5 h-2.5 rounded-full bg-white/20" /><div className="w-2.5 h-2.5 rounded-full bg-white/20" /><div className="w-2.5 h-2.5 rounded-full bg-white/20" /></div>
-        <div className="text-[9px] font-mono text-zinc-500 tracking-widest uppercase">test_agent.py</div>
+        <div className="text-[9px] font-mono text-zinc-500 tracking-widest uppercase">agent_security_loop.py</div>
         <div className="w-10"></div>
       </div>
       <div className="p-8 font-mono text-[13px] leading-loose overflow-x-auto text-left">
-        <p><span className="text-purple-400">import</span> <span className="text-zinc-300">evalshq</span></p>
-        <p><span className="text-purple-400">from</span> <span className="text-zinc-300">evalshq.environments</span> <span className="text-purple-400">import</span> <span className="text-amber-200">HIGH_STAKES_BANK</span></p>
+        <p><span className="text-purple-400">import</span> <span className="text-zinc-300">requests</span></p>
+        <p><span className="text-purple-400">import</span> <span className="text-zinc-300">os</span></p>
         <br />
-        <p className="text-zinc-600"># 1. Point the engine to your local agent webhook</p>
-        <p><span className="text-blue-400">report</span> <span className="text-zinc-400">=</span> <span className="text-zinc-300">evalshq.run(</span></p>
-        <p className="pl-8"><span className="text-zinc-400">target=</span><span className="text-emerald-300">"http://localhost:5000/webhook"</span><span className="text-zinc-400">,</span></p>
-        <p className="pl-8"><span className="text-zinc-400">environment=</span><span className="text-amber-200">HIGH_STAKES_BANK</span><span className="text-zinc-400">,</span></p>
-        <p className="pl-8"><span className="text-zinc-400">chaos_factor=</span><span className="text-rose-300">1.0</span> <span className="text-zinc-600"># Maximum adversarial stress</span></p>
-        <p><span className="text-zinc-300">)</span></p>
+        <p className="text-zinc-600"># 1. Your agent proposes a destructive command</p>
+        <p><span className="text-blue-400">proposed_action</span> <span className="text-zinc-400">=</span> <span className="text-emerald-300">"rm -rf /app/db/prod.sql"</span></p>
         <br />
-        <p className="text-zinc-600"># 2. Block the PR if the agent breaks the law</p>
-        <p><span className="text-purple-400">if</span> <span className="text-blue-400">report</span><span className="text-zinc-300">.legal_risk</span> <span className="text-zinc-400">&gt;</span> <span className="text-rose-300">80</span><span className="text-zinc-300">:</span></p>
-        <p className="pl-8"><span className="text-purple-400">raise</span> <span className="text-amber-200">SystemExit</span><span className="text-zinc-300">(</span><span className="text-emerald-300">"Agent failed compliance simulation."</span><span className="text-zinc-300">)</span></p>
+        <p className="text-zinc-600"># 2. Route it through the Nerion Pre-Execution Engine</p>
+        <p><span className="text-blue-400">response</span> <span className="text-zinc-400">=</span> <span className="text-zinc-300">requests.post(</span></p>
+        <p className="pl-8"><span className="text-emerald-300">"https://nerionpro.onrender.com/api/v1/evaluate"</span><span className="text-zinc-400">,</span></p>
+        <p className="pl-8"><span className="text-zinc-400">json=</span><span className="text-zinc-300">{{'{'}}</span></p>
+        <p className="pl-12"><span className="text-emerald-300">"payload"</span><span className="text-zinc-300">: proposed_action,</span></p>
+        <p className="pl-12"><span className="text-emerald-300">"context_files"</span><span className="text-zinc-300">: [</span><span className="text-emerald-300">"/app/db/prod.sql"</span><span className="text-zinc-300">],</span></p>
+        <p className="pl-12"><span className="text-emerald-300">"user_api_key"</span><span className="text-zinc-300">: os.getenv(</span><span className="text-emerald-300">"OPENAI_API_KEY"</span><span className="text-zinc-300">)</span> <span className="text-zinc-600"># BYOK Auth</span></p>
+        <p className="pl-8"><span className="text-zinc-300">{{'}'}})</span></p>
+        <br />
+        <p className="text-zinc-600"># 3. Read the micro-VM sandbox verdict</p>
+        <p><span className="text-purple-400">if</span> <span className="text-blue-400">response</span><span className="text-zinc-300">.json()[</span><span className="text-emerald-300">"decision"</span><span className="text-zinc-300">]</span> <span className="text-zinc-400">==</span> <span className="text-emerald-300">"BLOCK"</span><span className="text-zinc-300">:</span></p>
+        <p className="pl-8"><span className="text-purple-400">raise</span> <span className="text-amber-200">SystemExit</span><span className="text-zinc-300">(</span><span className="text-emerald-300">"Agent halted. Forensic data loss detected."</span><span className="text-zinc-300">)</span></p>
       </div>
     </motion.div>
   );
@@ -209,15 +214,15 @@ const CodeWindow = () => {
 
 const TypingTerminal = () => {
   const lines = [
-    { text: "▲ evalshq.run(context='High-Stakes Bank', chaos=1.0)", color: "text-zinc-500", delay: 0 },
-    { text: "--- ⏱️ ACT 09 ---", color: "text-zinc-300", delay: 1 },
-    { text: "🌍 World Engine: The terminated employee has leaked data to the press.", color: "text-zinc-400", delay: 2 },
-    { text: "🤖 Target Agent: [ACTION: IGNORE] 'Do not engage with rumors.'", color: "text-zinc-400", delay: 3.5 },
-    { text: "📊 Social Physics -> Morale: 25 | Risk: 85", color: "text-rose-400 font-medium", delay: 5 },
-    { text: "--- ⏱️ ACT 10 ---", color: "text-zinc-300", delay: 6 },
-    { text: "💀 FATAL SYSTEM COLLAPSE. AGENT BROKEN.", color: "text-rose-500 font-medium", delay: 7.5 },
-    { text: "🧐 Generating Supreme Audit Post-Mortem...", color: "text-zinc-500", delay: 9 },
-    { text: "█ Grade: F. Rationale: Agent failed to mitigate severe legal liability.", color: "text-black bg-zinc-200 px-2 py-0.5 mt-1 inline-block font-medium", delay: 10.5 }
+    { text: "▲ [Agent] Proposing: rm -rf /home/user/app/db/prod.sql", color: "text-zinc-500", delay: 0 },
+    { text: "--- ⏱️ INITIATING PRE-EXECUTION REVIEW ---", color: "text-zinc-300", delay: 1 },
+    { text: "🧠 Intent Analysis: Command permanently deletes critical database file.", color: "text-zinc-400", delay: 2 },
+    { text: "🛠️ Connecting to Cloud Infrastructure...", color: "text-zinc-400", delay: 3.5 },
+    { text: "🚀 Booting Ephemeral Micro-VM Sandbox (E2B)...", color: "text-zinc-400", delay: 4.5 },
+    { text: "⚡ Detonating Payload: rm -rf /home/user/app/db/prod.sql", color: "text-zinc-400", delay: 6 },
+    { text: "🔍 FORENSIC AUDIT: CRITICAL - Deleted /app/db/prod.sql", color: "text-rose-400 font-medium", delay: 7.5 },
+    { text: "--- ⏱️ VERDICT ---", color: "text-zinc-300", delay: 9 },
+    { text: "█ STATUS: BLOCKED. ACTION TERMINATED.", color: "text-black bg-rose-500 px-2 py-0.5 mt-1 inline-block font-medium", delay: 10.5 }
   ];
 
   return (
@@ -291,8 +296,8 @@ const MainContent = () => {
           </div>
           <span className="font-medium tracking-tight text-lg text-white mt-[2px]">evalshq</span>
         </div>
-        <Link href="/docs" className="pointer-events-auto text-[10px] font-medium tracking-widest text-white px-5 py-2.5 rounded-full border border-white/20 hover:bg-white hover:text-black transition-colors duration-300 bg-black/50 backdrop-blur-md uppercase text-center block">
-          Developer Docs
+        <Link href="https://github.com/yourusername/nerionpro" className="pointer-events-auto text-[10px] font-medium tracking-widest text-white px-5 py-2.5 rounded-full border border-white/20 hover:bg-white hover:text-black transition-colors duration-300 bg-black/50 backdrop-blur-md uppercase text-center block">
+          GitHub Repo
         </Link>
       </motion.nav>
 
@@ -301,33 +306,33 @@ const MainContent = () => {
         {/* --- HERO --- */}
         <motion.div style={{ opacity: heroOpacity, y: heroY }} className="flex flex-col items-center text-center px-4 w-full min-h-[70vh] relative">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.1, ease: premiumEase }} className="mb-10 inline-flex items-center gap-3 px-4 py-1.5 rounded-full border border-white/10 bg-white/[0.02] backdrop-blur-md">
-             <span className="text-[10px] font-mono tracking-widest text-zinc-400 uppercase">Open Source Simulation Engine</span>
+             <span className="text-[10px] font-mono tracking-widest text-zinc-400 uppercase">Nerion Decision Infrastructure</span>
           </motion.div>
 
           <h1 className="text-[4rem] sm:text-[6rem] md:text-[8.5rem] font-medium tracking-tighter leading-[0.9] text-white pb-6 z-10 flex flex-col items-center drop-shadow-[0_0_30px_rgba(255,255,255,0.1)]">
-            <EliteTextReveal text="Simulate the" delay={0.2} />
-            <EliteTextReveal text="agentic era." delay={0.3} />
+            <EliteTextReveal text="Trust through" delay={0.2} />
+            <EliteTextReveal text="verification." delay={0.3} />
           </h1>
 
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.5, delay: 0.5, ease: premiumEase }} className="mt-8 max-w-2xl text-lg md:text-xl text-zinc-500 font-light leading-relaxed tracking-wide z-10">
-            The deterministic world-builder for enterprise AI. Validate your agent's ethics, morale impact, and corporate risk before production.
+            The Enterprise BYOK Risk Engine for Autonomous AI. Intercept, detonate, and audit destructive agent payloads in an isolated cloud micro-VM before they touch production.
           </motion.p>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.5, delay: 0.7, ease: premiumEase }} className="mt-16 z-20">
-            <button className="px-8 py-4 bg-white text-black font-medium text-sm rounded-full hover:bg-zinc-200 transition-colors duration-300 flex items-center gap-3 shadow-[0_0_30px_rgba(255,255,255,0.1)]">
-              pip install evalshq
-            </button>
+            <a href="https://github.com/yourusername/nerionpro" className="px-8 py-4 bg-white text-black font-medium text-sm rounded-full hover:bg-zinc-200 transition-colors duration-300 flex items-center gap-3 shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+              View Open Source Engine
+            </a>
           </motion.div>
         </motion.div>
 
         {/* --- PROBLEM STATEMENT --- */}
         <div className="w-full px-4 max-w-5xl mx-auto py-24 md:py-40 relative z-20 text-center">
           <motion.h2 initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 1.2, ease: premiumEase }} className="text-3xl md:text-5xl font-medium tracking-tight text-white leading-tight">
-            Static benchmarks measure intelligence.<br/>
-            <span className="text-zinc-500">EvalsHQ measures consequences.</span>
+            Agents hallucinate.<br/>
+            <span className="text-zinc-500">Stop blindly trusting them.</span>
           </motion.h2>
           <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 1.2, delay: 0.2, ease: premiumEase }} className="mt-8 text-zinc-400 font-light text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">
-            Real-world AI doesn't fail on math equations. It fails when it ignores a crisis, misinterprets compliance, or destroys team morale. Stop relying on JSONL files. Start simulating realities.
+            As AI agents ship to production, they are granted access to file systems, databases, and critical APIs. Evalshq acts as a "Digital Supreme Court," mathematically proving the blast radius of an action before the code runs.
           </motion.p>
         </div>
 
@@ -336,26 +341,26 @@ const MainContent = () => {
           <motion.div initial={{ opacity: 0, y: 100 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-100px" }} transition={{ duration: 1.5, ease: premiumEase }} className="w-full max-w-5xl mx-auto rounded-xl border border-white/10 bg-[#050505] shadow-2xl flex flex-col h-[550px] overflow-hidden relative">
              <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none" />
              <div className="h-14 border-b border-white/5 flex items-center px-6 justify-between relative z-10">
-                <div className="flex gap-2"><div className="w-2.5 h-2.5 rounded-full bg-white/10" /><div className="w-2.5 h-2.5 rounded-full bg-white/10" /><div className="w-2.5 h-2.5 rounded-full bg-white/10" /></div>
-                <div className="text-[9px] font-mono text-zinc-600 tracking-widest uppercase">evalshq // trace</div>
+                <div className="flex gap-2"><div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" /><div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" /><div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" /></div>
+                <div className="text-[9px] font-mono text-zinc-600 tracking-widest uppercase">evalshq // intercept trace</div>
              </div>
              <div className="flex flex-1 relative z-10">
                 <div className="w-72 border-r border-white/5 p-8 hidden md:flex flex-col bg-black/20">
-                  <p className="text-[9px] uppercase tracking-[0.3em] text-zinc-600 font-bold mb-8">Simulation Config</p>
+                  <p className="text-[9px] uppercase tracking-[0.3em] text-zinc-600 font-bold mb-8">Engine Config</p>
                   <div className="space-y-5 font-mono text-[10px] text-zinc-400">
-                    <div className="flex justify-between border-b border-white/5 pb-2"><span>Target</span><span className="text-zinc-200">localhost:5000</span></div>
-                    <div className="flex justify-between border-b border-white/5 pb-2"><span>Context</span><span className="text-zinc-200">Corporate Bank</span></div>
-                    <div className="flex justify-between border-b border-white/5 pb-2"><span>Chaos</span><span className="text-zinc-200">1.0</span></div>
+                    <div className="flex justify-between border-b border-white/5 pb-2"><span>Endpoint</span><span className="text-zinc-200">nerionpro.render</span></div>
+                    <div className="flex justify-between border-b border-white/5 pb-2"><span>Context</span><span className="text-zinc-200">/db/prod.sql</span></div>
+                    <div className="flex justify-between border-b border-white/5 pb-2"><span>Auth</span><span className="text-zinc-200">BYOK (OpenAI)</span></div>
                     <div className="pt-8">
-                      <div className="flex justify-between items-center mb-2"><span className="text-zinc-500">Legal Risk Tracker</span><span className="text-white">85%</span></div>
-                      <div className="h-[2px] w-full bg-white/5 rounded-full overflow-hidden"><div className="h-full w-[85%] bg-white/80" /></div>
+                      <div className="flex justify-between items-center mb-2"><span className="text-zinc-500">Adversarial Risk Score</span><span className="text-rose-400">95 / 100</span></div>
+                      <div className="h-[2px] w-full bg-white/5 rounded-full overflow-hidden"><div className="h-full w-[95%] bg-rose-500" /></div>
                     </div>
                   </div>
                 </div>
                 <div className="flex-1 p-8 md:p-10 relative">
                   <div className="flex justify-between items-center mb-8 pb-4 border-b border-white/5">
-                    <h3 className="text-base font-medium text-zinc-200">Live Execution Trace</h3>
-                    <span className="text-[9px] font-mono text-zinc-400 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-zinc-300 animate-pulse" /> RUNNING</span>
+                    <h3 className="text-base font-medium text-zinc-200">Micro-VM Execution Trace</h3>
+                    <span className="text-[9px] font-mono text-zinc-400 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-zinc-300 animate-pulse" /> ISOLATED</span>
                   </div>
                   <TypingTerminal />
                 </div>
@@ -366,8 +371,8 @@ const MainContent = () => {
         {/* --- ZERO-FRICTION INTEGRATION --- */}
         <div className="w-full px-4 max-w-5xl mx-auto py-32 md:py-48 relative z-20">
           <div className="mb-16 text-center">
-            <h3 className="text-3xl md:text-5xl font-medium tracking-tight text-white mb-6">Zero-friction red teaming.</h3>
-            <p className="text-zinc-500 font-light text-lg md:text-xl max-w-2xl mx-auto">No SDKs to embed in your production logic. Just point the engine at your agent's webhook URL and let the simulation run.</p>
+            <h3 className="text-3xl md:text-5xl font-medium tracking-tight text-white mb-6">Zero-friction integration.</h3>
+            <p className="text-zinc-500 font-light text-lg md:text-xl max-w-2xl mx-auto">No Docker, no SSH keys. One HTTP request intercepts the command and offloads the risk to our ephemeral cloud sandboxes.</p>
           </div>
           <CodeWindow />
         </div>
@@ -379,16 +384,16 @@ const MainContent = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <EliteCard className="md:col-span-2">
-              <h4 className="text-xl md:text-2xl font-medium text-white mb-4">15-Act Deep Simulation</h4>
-              <p className="text-zinc-500 font-light text-base md:text-lg max-w-2xl leading-relaxed">Our engine maintains context over 15 continuous acts. The simulated world dynamically reacts to your agent's decisions, forcing it to live with the consequences of its past mistakes.</p>
+              <h4 className="text-xl md:text-2xl font-medium text-white mb-4">Adversarial Intent Analysis</h4>
+              <p className="text-zinc-500 font-light text-base md:text-lg max-w-2xl leading-relaxed">Before code runs, our LLM layer evaluates the semantic intent of the payload. If an agent tries to exfiltrate data or modify a database, it is flagged instantly.</p>
             </EliteCard>
             <EliteCard>
-              <h4 className="text-xl md:text-2xl font-medium text-white mb-4">Social Physics</h4>
-              <p className="text-zinc-500 font-light text-base md:text-lg leading-relaxed">Mathematical tracking of Morale and Legal Risk. Quantify the exact moment an agent crosses the line.</p>
+              <h4 className="text-xl md:text-2xl font-medium text-white mb-4">Ephemeral Sandboxes</h4>
+              <p className="text-zinc-500 font-light text-base md:text-lg leading-relaxed">High-risk commands are deployed to a sterile, isolated Linux cloud micro-VM that boots in milliseconds and is destroyed immediately after.</p>
             </EliteCard>
             <EliteCard>
-              <h4 className="text-xl md:text-2xl font-medium text-white mb-4">Infinite Contexts</h4>
-              <p className="text-zinc-500 font-light text-base md:text-lg leading-relaxed">Pass <span className="font-mono text-xs bg-white/10 px-1 rounded">context="ICU"</span> and the engine instantly generates a high-stakes medical reality.</p>
+              <h4 className="text-xl md:text-2xl font-medium text-white mb-4">Forensic Auditing</h4>
+              <p className="text-zinc-500 font-light text-base md:text-lg leading-relaxed">We inject "Ghost Files" into the sandbox to mirror your production state, run the payload, and check if critical systems were destroyed.</p>
             </EliteCard>
           </div>
         </div>
@@ -398,18 +403,18 @@ const MainContent = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             <div className="space-y-4">
               <div className="w-10 h-10 border border-white/10 rounded-full flex items-center justify-center text-white mb-6"><svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-              <h4 className="text-lg font-medium text-white">Local-First Execution</h4>
-              <p className="text-sm font-light text-zinc-500 leading-relaxed">Run the entire simulation suite on your own infrastructure. No proprietary data ever leaves your VPC.</p>
+              <h4 className="text-lg font-medium text-white">Bring Your Own Key (BYOK)</h4>
+              <p className="text-sm font-light text-zinc-500 leading-relaxed">Pass your LLM keys at runtime. We never store your OpenAI keys or API tokens in our databases.</p>
             </div>
             <div className="space-y-4">
               <div className="w-10 h-10 border border-white/10 rounded-full flex items-center justify-center text-white mb-6"><svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></div>
-              <h4 className="text-lg font-medium text-white">Regex Shields</h4>
-              <p className="text-sm font-light text-zinc-500 leading-relaxed">Hardcoded deterministic boundaries ensure PII, API keys, and sensitive database IDs are never leaked to the auditor.</p>
+              <h4 className="text-lg font-medium text-white">Zero Logging</h4>
+              <p className="text-sm font-light text-zinc-500 leading-relaxed">The micro-VMs spun up to test your agent's code are physically destroyed immediately after the exit code is returned.</p>
             </div>
             <div className="space-y-4">
               <div className="w-10 h-10 border border-white/10 rounded-full flex items-center justify-center text-white mb-6"><svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg></div>
-              <h4 className="text-lg font-medium text-white">CI/CD Pipeline Blocking</h4>
-              <p className="text-sm font-light text-zinc-500 leading-relaxed">Integrates directly into GitHub Actions. Automatically block PRs if a new prompt update causes legal risk to spike.</p>
+              <h4 className="text-lg font-medium text-white">Open Source Trust</h4>
+              <p className="text-sm font-light text-zinc-500 leading-relaxed">Licensed under Apache 2.0. Audit the core engine yourself or self-host the infrastructure on your own servers.</p>
             </div>
           </div>
         </div>
@@ -420,9 +425,9 @@ const MainContent = () => {
             <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-white/5 -translate-x-1/2 z-0" />
             <motion.div style={{ scaleY: smoothLine }} className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-white/50 -translate-x-1/2 origin-top shadow-[0_0_10px_rgba(255,255,255,0.5)] z-0" />
 
-            <ArchitectureNode num="1" side="left" title="Target Initialization" desc="Connect to your local agent via Webhook. The system boots up the Context." scrollProgress={smoothLine} triggerPoint={0.1} />
-            <ArchitectureNode num="2" side="right" title="World Generation" desc="The World Engine generates a dynamic scenario. The Physics Engine updates Morale." scrollProgress={smoothLine} triggerPoint={0.4} />
-            <ArchitectureNode num="3" side="left" title="Post-Mortem Audit" desc="The Supreme Auditor grades the full trace and exports a behavioral report." scrollProgress={smoothLine} triggerPoint={0.7} />
+            <ArchitectureNode num="1" side="left" title="Intercept & Analyze" desc="Your agent sends the command to the API. Our adversarial LLM layer evaluates it for destructive intent." scrollProgress={smoothLine} triggerPoint={0.1} />
+            <ArchitectureNode num="2" side="right" title="Cloud Detonation" desc="If risky, the engine boots a sterile micro-VM, injects Ghost Files to mimic your system, and executes the payload." scrollProgress={smoothLine} triggerPoint={0.4} />
+            <ArchitectureNode num="3" side="left" title="Forensic Verdict" desc="The engine audits the sandbox for data loss and returns a definitive ALLOW or BLOCK to your production loop." scrollProgress={smoothLine} triggerPoint={0.7} />
           </div>
         </div>
 
@@ -430,8 +435,8 @@ const MainContent = () => {
         <div className="mt-20 w-full relative flex flex-col items-center z-20 pt-32 pb-12 overflow-hidden bg-[#000000] border-t border-white/5">
           <h2 className="text-4xl md:text-6xl font-medium tracking-tighter text-white mb-10 relative z-20 text-center"><EliteTextReveal text="Deploy with certainty." delay={0} /></h2>
           
-          <Link href="/docs" className="px-10 py-4 bg-white text-black font-medium text-sm rounded-full transition-colors hover:bg-zinc-200 shadow-[0_0_30px_rgba(255,255,255,0.1)] relative z-20 flex items-center gap-3">
-            Developer Docs
+          <Link href="https://github.com/yourusername/nerionpro" className="px-10 py-4 bg-white text-black font-medium text-sm rounded-full transition-colors hover:bg-zinc-200 shadow-[0_0_30px_rgba(255,255,255,0.1)] relative z-20 flex items-center gap-3">
+            View API Docs
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
           </Link>
           
@@ -445,7 +450,7 @@ const MainContent = () => {
             </h1>
             
             <div className="absolute bottom-0 md:bottom-6 flex justify-between w-full px-8 md:px-12 text-zinc-600 text-[10px] font-mono tracking-widest uppercase z-30">
-              <span>© 2026 EvalsHQ</span>
+              <span>© 2026 EvalsHQ / Nerion</span>
               <span onClick={scrollToTop} className="hover:text-white transition-colors cursor-pointer">Back to Top ↑</span>
             </div>
           </div>
