@@ -296,8 +296,8 @@ const MainContent = () => {
           </div>
           <span className="font-medium tracking-tight text-lg text-white mt-[2px]">evalshq</span>
         </div>
-        <Link href="https://github.com/yourusername/nerionpro" className="pointer-events-auto text-[10px] font-medium tracking-widest text-white px-5 py-2.5 rounded-full border border-white/20 hover:bg-white hover:text-black transition-colors duration-300 bg-black/50 backdrop-blur-md uppercase text-center block">
-          GitHub Repo
+        <Link href="/docs" className="pointer-events-auto text-[10px] font-medium tracking-widest text-white px-5 py-2.5 rounded-full border border-white/20 hover:bg-white hover:text-black transition-colors duration-300 bg-black/50 backdrop-blur-md uppercase text-center block">
+          Docs
         </Link>
       </motion.nav>
 
@@ -319,9 +319,9 @@ const MainContent = () => {
           </motion.p>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.5, delay: 0.7, ease: premiumEase }} className="mt-16 z-20">
-            <a href="https://github.com/yourusername/nerionpro" className="px-8 py-4 bg-white text-black font-medium text-sm rounded-full hover:bg-zinc-200 transition-colors duration-300 flex items-center gap-3 shadow-[0_0_30px_rgba(255,255,255,0.1)]">
-              View Open Source Engine
-            </a>
+            <Link href="/docs" className="px-8 py-4 bg-white text-black font-medium text-sm rounded-full hover:bg-zinc-200 transition-colors duration-300 flex items-center gap-3 shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+              Try API → 
+            </Link>
           </motion.div>
         </motion.div>
 
@@ -435,7 +435,7 @@ const MainContent = () => {
         <div className="mt-20 w-full relative flex flex-col items-center z-20 pt-32 pb-12 overflow-hidden bg-[#000000] border-t border-white/5">
           <h2 className="text-4xl md:text-6xl font-medium tracking-tighter text-white mb-10 relative z-20 text-center"><EliteTextReveal text="Deploy with certainty." delay={0} /></h2>
           
-          <Link href="https://github.com/yourusername/nerionpro" className="px-10 py-4 bg-white text-black font-medium text-sm rounded-full transition-colors hover:bg-zinc-200 shadow-[0_0_30px_rgba(255,255,255,0.1)] relative z-20 flex items-center gap-3">
+          <Link href="/docs" className="px-10 py-4 bg-white text-black font-medium text-sm rounded-full transition-colors hover:bg-zinc-200 shadow-[0_0_30px_rgba(255,255,255,0.1)] relative z-20 flex items-center gap-3">
             View API Docs
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
           </Link>
